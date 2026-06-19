@@ -15,7 +15,11 @@
     "db:reminders": "pbcopy < supabase/migrate-reminders.sql && echo 'Reminders migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "db:storage": "pbcopy < supabase/storage.sql && echo 'Storage SQL copied (1 GB bucket limit).' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "db:storage-1gb": "pbcopy < supabase/migrate-storage-1gb.sql && echo 'Storage 1 GB migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
-    "db:poster": "pbcopy < supabase/migrate-poster-url.sql && echo 'Poster URL migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
+    "db:storage-1gb:apply": "node scripts/apply-storage-1gb.mjs",
+    "db:storage:check": "node scripts/check-storage-limit.mjs",
+    "db:poster": "pbcopy < supabase/migrate-poster-url.sql && echo 'Poster URL migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
+    "db:release-tba": "pbcopy < supabase/migrate-release-date-tba.sql && echo 'Release date TBA migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
+    "db:content-columns": "pbcopy < supabase/migrate-content-columns.sql && echo 'Content columns migration copied (poster_url + release_date_tba).' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
