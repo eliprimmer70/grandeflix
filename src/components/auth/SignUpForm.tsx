@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { authCallbackUrl } from "@/lib/site";
 
 export function SignUpForm() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export function SignUpForm() {
       email: String(form.get("email")),
       password: String(form.get("password")),
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/browse`,
+        emailRedirectTo: authCallbackUrl("/browse"),
       },
     });
 

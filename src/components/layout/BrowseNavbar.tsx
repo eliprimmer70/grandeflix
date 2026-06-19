@@ -32,17 +32,27 @@ export function BrowseNavbar() {
   }, []);
 
   useEffect(() => {
-    const supabase = createClient();
+    let supabase;
+    try {
+      supabase = createClient();
+    } catch {
+      return;
+    }
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
       setInitial((user.email?.[0] ?? "G").toUpperCase());
-      const { data } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single();
-      setIsAdmin(Boolean(data?.is_admin));
+      const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+      setIsAdmin(data?.role === "admin");
     });
   }, []);
 
   async function signOut() {
-    const supabase = createClient();
+    let supabase;
+    try {
+      supabase = createClient();
+    } catch {
+      return;
+    }
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();

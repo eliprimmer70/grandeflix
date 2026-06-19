@@ -3,29 +3,34 @@ import type { DbContent } from "@/lib/types";
 import { mapContent, sanitizeSearchQuery } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/types";
 
-/** GRANDEFLIX content table (separate from the main app's tables) */
-export const FLIX_CONTENT = "flix_content";
-
 export async function getSessionUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+  try {
+    const supabase = await createClient();
+    if (!supabase) return null;
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return user;
+  } catch {
+    return null;
+  }
 }
 
 export async function isUserAdmin(userId: string): Promise<boolean> {
   const supabase = await createClient();
+  if (!supabase) return false;
   const { data } = await supabase
     .from("profiles")
-    .select("is_admin")
+    .select("role")
     .eq("id", userId)
     .single();
-  return Boolean(data?.is_admin);
+  return data?.role === "admin";
 }
 
 export async function requireAdmin() {
   const supabase = await createClient();
+  if (!supabase) throw new Error("Unauthorized");
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -33,18 +38,19 @@ export async function requireAdmin() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("is_admin")
+    .select("role")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.is_admin) throw new Error("Forbidden");
+  if (profile?.role !== "admin") throw new Error("Forbidden");
   return { supabase, user };
 }
 
 async function fetchAllContent(): Promise<DbContent[]> {
   const supabase = await createClient();
+  if (!supabase) return [];
   const { data, error } = await supabase
-    .from(FLIX_CONTENT)
+    .from("content")
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -54,8 +60,9 @@ async function fetchAllContent(): Promise<DbContent[]> {
 
 export async function getFeaturedContent() {
   const supabase = await createClient();
+  if (!supabase) return null;
   const { data } = await supabase
-    .from(FLIX_CONTENT)
+    .from("content")
     .select("*")
     .eq("featured", true)
     .order("created_at", { ascending: false })
@@ -79,8 +86,9 @@ export async function getContentRows() {
 
 export async function getContentBySlug(slug: string) {
   const supabase = await createClient();
+  if (!supabase) return null;
   const { data } = await supabase
-    .from(FLIX_CONTENT)
+    .from("content")
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
@@ -90,14 +98,16 @@ export async function getContentBySlug(slug: string) {
 
 export async function getAllSlugs() {
   const supabase = await createClient();
-  const { data } = await supabase.from(FLIX_CONTENT).select("slug");
+  if (!supabase) return [];
+  const { data } = await supabase.from("content").select("slug");
   return (data ?? []).map((r) => r.slug as string);
 }
 
 export async function getRelatedContent(category: string, excludeId: string) {
   const supabase = await createClient();
+  if (!supabase) return [];
   const { data } = await supabase
-    .from(FLIX_CONTENT)
+    .from("content")
     .select("*")
     .eq("category", category)
     .neq("id", excludeId)
@@ -115,8 +125,9 @@ export async function searchContent(query: string) {
   if (!safe) return [];
 
   const supabase = await createClient();
+  if (!supabase) return [];
   const { data } = await supabase
-    .from(FLIX_CONTENT)
+    .from("content")
     .select("*")
     .or(`title.ilike.%${safe}%,description.ilike.%${safe}%`)
     .order("created_at", { ascending: false });
@@ -126,8 +137,9 @@ export async function searchContent(query: string) {
 
 export async function getAllContentAdmin() {
   const supabase = await createClient();
+  if (!supabase) return [];
   const { data } = await supabase
-    .from(FLIX_CONTENT)
+    .from("content")
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -136,6 +148,7 @@ export async function getAllContentAdmin() {
 
 export async function getContentByIdAdmin(id: string) {
   const supabase = await createClient();
-  const { data } = await supabase.from(FLIX_CONTENT).select("*").eq("id", id).maybeSingle();
+  if (!supabase) return null;
+  const { data } = await supabase.from("content").select("*").eq("id", id).maybeSingle();
   return data as DbContent | null;
 }

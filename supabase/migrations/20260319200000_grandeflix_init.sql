@@ -1,4 +1,4 @@
--- GRANDEFLIX — run via Supabase CLI or SQL Editor
+-- GRANDEFLIX initial schema
 
 create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
@@ -84,6 +84,3 @@ create policy "content_delete_admin"
       where id = auth.uid() and role = 'admin'
     )
   );
-
--- After first sign-up:
--- update public.profiles set role = 'admin' where email = 'eli.primmer@gmail.com';
