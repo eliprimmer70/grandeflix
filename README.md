@@ -72,7 +72,7 @@ Once R2 env vars are set in Vercel (see below), admins can use **Upload to Cloud
 
 #### Option B — Manual upload + paste URL
 
-1. **Create a bucket** in the [Cloudflare dashboard](https://dash.cloudflare.com/) → **R2** → **Create bucket** (e.g. `grandeflix`).
+1. **Create a bucket** in the [Cloudflare dashboard](https://dash.cloudflare.com/) → **R2** → **Create bucket** (name: `grandeflix-media`).
 2. **Enable public access** — turn on the **r2.dev subdomain** for the bucket, or connect a **custom domain** under **Settings → Public access**. See [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/).
 3. **Create an API token** — **R2** → **Manage R2 API Tokens** → **Create API token** with **Object Read & Write** on your bucket. Save the Access Key ID and Secret Access Key.
 4. **Upload your video** — drag the `.mp4` into the bucket, or use the admin R2 upload button.
@@ -87,7 +87,7 @@ The player treats `*.r2.dev` URLs, your custom R2 domain, and any direct `.mp4` 
 | `R2_ACCOUNT_ID` | Cloudflare dashboard → any page → right sidebar **Account ID** |
 | `R2_ACCESS_KEY_ID` | R2 → Manage R2 API Tokens → token you created |
 | `R2_SECRET_ACCESS_KEY` | Shown once when creating the token |
-| `R2_BUCKET_NAME` | Your bucket name, e.g. `grandeflix` |
+| `R2_BUCKET_NAME` | Your bucket name: `grandeflix-media` |
 | `R2_PUBLIC_URL` | Public bucket URL — e.g. `https://pub-xxxx.r2.dev` (no trailing slash) or `https://media.grandeflix.com` |
 
 Add all five to **Vercel → Settings → Environment Variables** (Production + Preview), then **redeploy**. Never use `NEXT_PUBLIC_` for R2 secrets.
@@ -97,7 +97,15 @@ Add all five to **Vercel → Settings → Environment Variables** (Production + 
 Browser uploads use presigned PUT URLs. In the Cloudflare dashboard → your bucket → **Settings → CORS policy**, paste the JSON from **`scripts/r2-cors.json`** (allows `https://grandeflix.com` and `http://localhost:3000`). Or with Wrangler after login:
 
 ```bash
-npx wrangler r2 bucket cors put grandeflix --file scripts/r2-cors.json
+npm run r2:login          # optional — for CLI CORS
+npm run r2:cors           # after wrangler login
+npm run r2:setup          # after adding R2_* to .env — syncs Vercel + deploys
+```
+
+Or manually in the dashboard → bucket → **Settings → CORS policy**, paste **`scripts/r2-cors.json`**. With Wrangler:
+
+```bash
+npx wrangler r2 bucket cors put grandeflix-media --file scripts/r2-cors-wrangler.json
 ```
 
 See [R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/).

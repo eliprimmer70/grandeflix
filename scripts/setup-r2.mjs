@@ -146,7 +146,7 @@ for (const name of R2_VARS) {
 }
 
 console.log("\nApplying CORS (requires wrangler login)…");
-const corsResult = run(`npx wrangler r2 bucket cors put ${env.R2_BUCKET_NAME || BUCKET} --file scripts/r2-cors.json`);
+const corsResult = run(`npx wrangler r2 bucket cors put ${env.R2_BUCKET_NAME || BUCKET} --file scripts/r2-cors-wrangler.json`);
 if (corsResult.status !== 0) {
   console.log("⚠ CORS not applied via CLI — paste scripts/r2-cors.json in bucket Settings → CORS.");
 }
