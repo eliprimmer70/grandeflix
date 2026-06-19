@@ -73,6 +73,44 @@ export default async function SetupPage({
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/20 text-xs font-bold text-brand-bright">
               3
             </span>
+            <div id="auth">
+              <p className="font-medium text-white">Disable email confirmation (required)</p>
+              <p className="mt-1 text-xs text-white/40">
+                GRANDEFLIX signs users in immediately — no verification email. If &quot;Confirm email&quot; is
+                on, Supabase sends a confirmation on every signup and you will hit the free-tier email rate
+                limit quickly.
+              </p>
+              <a
+                href={supabaseSetup.emailProviderUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-brand-bright hover:underline"
+              >
+                Supabase Email provider settings →
+              </a>
+              <p className="mt-2 text-white/45">
+                Turn <strong className="text-white/70">off</strong>{" "}
+                <code className="text-white/70">Confirm email</code> under Authentication → Providers →
+                Email.
+              </p>
+              <p className="mt-3 text-xs text-white/40">
+                Free tier rate limits (Authentication → Rate Limits): signup/confirmation emails are capped
+                (~2 per hour).{" "}
+                <a
+                  href={supabaseSetup.rateLimitsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-brand-bright hover:underline"
+                >
+                  View rate limits →
+                </a>
+              </p>
+            </div>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/20 text-xs font-bold text-brand-bright">
+              4
+            </span>
             <div>
               <p className="font-medium text-white">Configure auth redirects</p>
               <a
@@ -92,7 +130,7 @@ export default async function SetupPage({
           </li>
           <li className="flex gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand/20 text-xs font-bold text-brand-bright">
-              4
+              5
             </span>
             <div>
               <p className="font-medium text-white">Make yourself admin (after signing up)</p>

@@ -4,4 +4,8 @@ export const supabaseSetup = {
   sqlEditorUrl: "https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
   dashboardUrl: "https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj",
   authUrl: "https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/auth/url-configuration",
+  emailProviderUrl:
+    "https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/auth/providers?provider=Email",
+  rateLimitsUrl:
+    "https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/auth/rate-limits",
 };

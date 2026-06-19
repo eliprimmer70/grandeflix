@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { formatSignupError } from "@/lib/auth-errors";
+import { ensureUserProfile } from "@/lib/profiles";
 import { createClient } from "@/lib/supabase/client";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { authCallbackUrl } from "@/lib/site";
 import { SupabaseSetupNotice } from "./SupabaseSetupNotice";
 
 export function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const submittingRef = useRef(false);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [showSetupLink, setShowSetupLink] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,27 +30,42 @@ export function SignUpForm() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (loading || submittingRef.current) return;
+
+    submittingRef.current = true;
     setLoading(true);
     setError("");
+    setShowSetupLink(false);
     setMessage("");
 
-    const form = new FormData(e.currentTarget);
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signUp({
-      email: String(form.get("email")),
-      password: String(form.get("password")),
-      options: {
-        emailRedirectTo: authCallbackUrl("/browse"),
-      },
-    });
+    try {
+      const form = new FormData(e.currentTarget);
+      const supabase = createClient();
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: String(form.get("email")),
+        password: String(form.get("password")),
+      });
 
-    setLoading(false);
-    if (authError) {
-      setError(authError.message);
-      return;
+      if (authError) {
+        const formatted = formatSignupError(authError.message);
+        setError(formatted.text);
+        setShowSetupLink(formatted.showSetupLink);
+        return;
+      }
+
+      if (data.session?.user) {
+        await ensureUserProfile(supabase, data.session.user);
+        router.push("/browse");
+        router.refresh();
+        return;
+      }
+
+      setMessage("Account created. Check your email to confirm, then sign in.");
+      setTimeout(() => router.push("/login"), 2000);
+    } finally {
+      setLoading(false);
+      submittingRef.current = false;
     }
-    setMessage("Account created. Check your email to confirm, then sign in.");
-    setTimeout(() => router.push("/login"), 2000);
   }
 
   return (
@@ -64,7 +82,8 @@ export function SignUpForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
-          className="input-field w-full rounded-lg px-3 py-2.5 text-base text-white"
+          disabled={loading}
+          className="input-field w-full rounded-lg px-3 py-2.5 text-base text-white disabled:opacity-50"
         />
       </div>
       <div>
@@ -78,10 +97,20 @@ export function SignUpForm() {
           required
           minLength={8}
           autoComplete="new-password"
-          className="input-field w-full rounded-lg px-3 py-2.5 text-base text-white"
+          disabled={loading}
+          className="input-field w-full rounded-lg px-3 py-2.5 text-base text-white disabled:opacity-50"
         />
       </div>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && (
+        <div className="space-y-2 text-sm text-red-400">
+          <p>{error}</p>
+          {showSetupLink && (
+            <Link href="/setup#auth" className="inline-block text-brand-bright hover:underline">
+              Supabase auth setup guide →
+            </Link>
+          )}
+        </div>
+      )}
       {message && <p className="text-sm text-emerald-400/90">{message}</p>}
       <button
         type="submit"

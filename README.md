@@ -76,6 +76,15 @@ If the bucket already exists with a lower limit, run **`supabase/migrate-storage
 | **Redirect URLs** | `https://grandeflix.com/auth/callback` |
 | | `http://localhost:3000/auth/callback` |
 
+### Disable email confirmation (required)
+
+GRANDEFLIX does **not** use email verification. In the Supabase dashboard:
+
+1. **Authentication → Providers → Email** — turn **Confirm email** **OFF**
+2. **Authentication → Rate Limits** — free tier caps signup/confirmation emails (~4/hour). If signup fails with *email rate limit exceeded*, wait an hour or confirm step 1 is disabled.
+
+With confirmation off, `signUp` returns a session immediately and users go straight to `/browse`. See **[grandeflix.com/setup#auth](https://grandeflix.com/setup#auth)** for the full checklist.
+
 ---
 
 ## Routes

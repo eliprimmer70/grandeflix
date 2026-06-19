@@ -20,6 +20,8 @@ export function LoginForm() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
