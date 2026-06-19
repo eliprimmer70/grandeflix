@@ -128,4 +128,4 @@ create policy "reminders_delete_own"
 -- where lower(email) = lower('eli.primmer@gmail.com')
 -- on conflict (id) do update set role = 'admin';
 
--- Storage bucket + policies for admin uploads: run supabase/storage.sql
+-- Media files (images, videos) are stored in Cloudflare R2 — see README / setup#r2

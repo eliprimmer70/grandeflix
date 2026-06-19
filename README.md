@@ -48,37 +48,23 @@ This creates the profile row if the signup trigger missed, then sets `role = 'ad
 
 **Optional (Vercel):** set `ADMIN_BOOTSTRAP_EMAIL` and `SUPABASE_SERVICE_ROLE_KEY` (server-only) to auto-promote that email on sign-in — no SQL step after the first deploy with those vars.
 
-### 3. Storage (admin uploads)
+### 3. Media storage (Cloudflare R2)
 
-Run **`supabase/storage.sql`** in the SQL Editor (or `npm run db:storage`) to create the public `media` bucket. Video and trailer uploads allow up to **1 GB** in the app.
+All admin uploads (posters, hero images, videos, trailers) go to **Cloudflare R2** — not Supabase Storage. Supabase is still used for **auth and the database only**.
 
-If the bucket already exists with a lower limit, run **`supabase/migrate-storage-1gb.sql`** (or `npm run db:storage-1gb`).
+**One-command finish:** after browser setup, add `R2_*` vars to `.env`, then run `npm run r2:setup` (or `npm run r2:finish` with `CLOUDFLARE_API_TOKEN`) — syncs Vercel, applies CORS, and deploys.
 
-To apply the bucket limit via API (requires Pro + raised global limit): `npm run db:storage-1gb:apply`. Check current limits: `npm run db:storage:check`.
+#### Upload from admin (recommended)
 
-**Enforced limit:** Supabase applies the **lower** of (1) global Storage Settings limit, (2) bucket `file_size_limit`, and (3) app validation. On the **Free tier**, the global cap is **50 MB** — raising the bucket to 1 GB in SQL or via API will fail until you upgrade to **Pro** and increase **Storage → Settings → Global file size limit**. For large videos on Free, paste a **YouTube/Vimeo URL** or host the MP4 on **Cloudflare R2** (see below).
+Once R2 env vars are set in Vercel, admins use **Upload to Cloudflare R2** on `/admin`. Files are stored at `thumbnails/{slug}/…`, `videos/{slug}/…`, `trailers/{slug}/…` and the public URL is saved automatically.
 
-### Remind me (content_reminders)
+#### Manual upload + paste URL
 
-If the base schema was applied before reminders were added, run **`supabase/migrate-content-reminders.sql`** in the SQL Editor (or `npm run db:reminders` to copy it). See also [grandeflix.com/setup#reminders](https://grandeflix.com/setup#reminders).
-
-### Cloudflare R2 for large videos
-
-Supabase Storage is fine for posters and short clips, but multi-GB fan films exceed the Free-tier upload cap. **Cloudflare R2** offers **10 GB free storage** with **no egress fees** — ideal for direct MP4 links played by the built-in HTML5 player.
-
-#### Option A — Upload from admin (recommended)
-
-Once R2 env vars are set in Vercel (see below), admins can use **Upload to Cloudflare R2** on `/admin` for video and trailer fields. Files are stored at `videos/{slug}/…`, `trailers/{slug}/…` and the public URL is saved automatically.
-
-**One-command finish:** after browser setup, add `R2_*` vars to `.env`, then run `npm run r2:setup` — it pushes env vars to Vercel, applies CORS (if wrangler is logged in), and deploys production.
-
-#### Option B — Manual upload + paste URL
-
-1. **Create a bucket** in the [Cloudflare dashboard](https://dash.cloudflare.com/) → **R2** → **Create bucket** (name: `grandeflix-media`).
-2. **Enable public access** — turn on the **r2.dev subdomain** for the bucket, or connect a **custom domain** under **Settings → Public access**. See [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/).
-3. **Create an API token** — **R2** → **Manage R2 API Tokens** → **Create API token** with **Object Read & Write** on your bucket. Save the Access Key ID and Secret Access Key.
-4. **Upload your video** — drag the `.mp4` into the bucket, or use the admin R2 upload button.
-5. **Paste in admin** — in **Video URL** (or **Trailer URL**) on `/admin`, paste the R2 URL and save.
+1. **Create a bucket** in the [Cloudflare dashboard](https://dash.cloudflare.com/) → **R2** → **Create bucket** (name: `grandeflix`).
+2. **Enable public access** — turn on the **r2.dev subdomain** for the bucket. See [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/).
+3. **Create an API token** — **R2** → **Manage R2 API Tokens** → **Object Read & Write** on your bucket.
+4. **Upload** via admin or drag files into the bucket dashboard.
+5. **Paste** the public URL in admin if not using the upload button.
 
 The player treats `*.r2.dev` URLs, your custom R2 domain, and any direct `.mp4` / `.webm` / `.mov` link as native HTML5 video.
 
@@ -86,31 +72,25 @@ The player treats `*.r2.dev` URLs, your custom R2 domain, and any direct `.mp4` 
 
 | Variable | Where to find it |
 |----------|------------------|
-| `R2_ACCOUNT_ID` | Cloudflare dashboard → any page → right sidebar **Account ID** |
-| `R2_ACCESS_KEY_ID` | R2 → Manage R2 API Tokens → token you created |
+| `R2_ACCOUNT_ID` | Cloudflare dashboard → right sidebar **Account ID** |
+| `R2_ACCESS_KEY_ID` | R2 → Manage R2 API Tokens |
 | `R2_SECRET_ACCESS_KEY` | Shown once when creating the token |
-| `R2_BUCKET_NAME` | Your bucket name: `grandeflix-media` |
-| `R2_PUBLIC_URL` | Public bucket URL — e.g. `https://pub-xxxx.r2.dev` (no trailing slash) or `https://media.grandeflix.com` |
+| `R2_BUCKET_NAME` | Your bucket name: `grandeflix` |
+| `R2_PUBLIC_URL` | Public bucket URL — e.g. `https://pub-xxxx.r2.dev` (no trailing slash) |
 
-Add all five to **Vercel → Settings → Environment Variables** (Production + Preview), then **redeploy**. Never use `NEXT_PUBLIC_` for R2 secrets.
+Add all five to **Vercel → Settings → Environment Variables** (Production + Preview), then **redeploy**.
 
 #### R2 bucket CORS (required for admin uploads)
 
-Browser uploads use presigned PUT URLs. In the Cloudflare dashboard → your bucket → **Settings → CORS policy**, paste the JSON from **`scripts/r2-cors.json`** (allows `https://grandeflix.com` and `http://localhost:3000`). Or with Wrangler after login:
+Browser uploads use presigned PUT URLs. In bucket **Settings → CORS policy**, paste **`scripts/r2-cors.json`**. Or:
 
 ```bash
-npm run r2:login          # optional — for CLI CORS
-npm run r2:cors           # after wrangler login
-npm run r2:setup          # after adding R2_* to .env — syncs Vercel + deploys
+npm run r2:login
+npm run r2:cors
+npm run r2:finish   # needs CLOUDFLARE_API_TOKEN in .env
 ```
 
-Or manually in the dashboard → bucket → **Settings → CORS policy**, paste **`scripts/r2-cors.json`**. With Wrangler:
-
-```bash
-npx wrangler r2 bucket cors put grandeflix-media --file scripts/r2-cors-wrangler.json
-```
-
-See [R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/).
+See [grandeflix.com/setup#r2](https://grandeflix.com/setup#r2) for the full checklist.
 
 ---
 
@@ -121,11 +101,11 @@ See [R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/).
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://psicdsfgkqhjvqreroxj.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase **anon** JWT |
 | `NEXT_PUBLIC_SITE_URL` | `https://grandeflix.com` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase **service_role** JWT (admin uploads) |
-| `R2_ACCOUNT_ID` | Cloudflare account ID (large video uploads) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase **service_role** JWT (admin bootstrap) |
+| `R2_ACCOUNT_ID` | Cloudflare account ID (all media uploads) |
 | `R2_ACCESS_KEY_ID` | R2 API token access key |
 | `R2_SECRET_ACCESS_KEY` | R2 API token secret |
-| `R2_BUCKET_NAME` | `grandeflix-media` |
+| `R2_BUCKET_NAME` | `grandeflix` |
 | `R2_PUBLIC_URL` | Public bucket URL, e.g. `https://pub-xxxx.r2.dev` |
 
 **Redeploy** after updating env vars.

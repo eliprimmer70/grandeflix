@@ -169,10 +169,10 @@ on conflict (id) do update set role = 'admin';`}
         </section>
 
         <section id="r2" className="mt-12 rounded-xl border border-white/10 bg-white/[0.02] p-6">
-          <h2 className="font-display text-lg font-semibold text-white">Cloudflare R2 (large videos)</h2>
+          <h2 className="font-display text-lg font-semibold text-white">Cloudflare R2 (all media uploads)</h2>
           <p className="mt-2 text-sm text-white/55">
-            Optional — enables <strong className="text-white/80">Upload to Cloudflare R2</strong> in
-            admin for multi-GB fan films. Posters and short clips can stay on Supabase.
+            Required for admin uploads — posters, hero images, videos, and trailers all go to R2.
+            Supabase is auth + database only.
           </p>
           <ol className="mt-6 space-y-5 text-sm text-white/70">
             <li className="flex gap-3">

@@ -120,20 +120,22 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
         <h2 className="text-sm font-medium text-white/75">Media</h2>
         <p className="text-xs text-white/35">
           <strong className="font-medium text-white/55">On-site playback (recommended):</strong> upload
-          MP4 under 50&nbsp;MB to Supabase, or paste any direct{" "}
-          <code className="text-white/50">.mp4</code> / <code className="text-white/50">.webm</code>{" "}
-          URL (Supabase Storage, Cloudflare R2, Bunny CDN, etc.). Videos play in GRANDEFLIX&apos;s
-          native player — no YouTube branding.
+          via Cloudflare R2 (images, videos, trailers) or paste any direct{" "}
+          <code className="text-white/50">.mp4</code> / <code className="text-white/50">.webm</code> /{" "}
+          <code className="text-white/50">.jpg</code> URL. Videos play in GRANDEFLIX&apos;s native player
+          — no YouTube branding.
         </p>
         <p className="text-xs text-white/30">
-          <strong className="font-medium text-white/45">Large files (&gt;50&nbsp;MB):</strong> Supabase
-          Free caps uploads at 50&nbsp;MB. Upgrade to Supabase Pro and raise the global Storage limit
-          for self-hosted uploads, or upload to Cloudflare R2 / any CDN and paste the public MP4 link.
-          R2 admin uploads need <code className="text-white/50">R2_*</code> env vars (see README).
+          <strong className="font-medium text-white/45">R2 required for uploads:</strong> configure{" "}
+          <code className="text-white/50">R2_*</code> env vars (see{" "}
+          <a href="/setup#r2" className="text-brand-bright hover:underline">
+            setup guide
+          </a>
+          ). Videos up to 10 GB, images up to 10 MB per file.
         </p>
         <p className="text-xs text-white/30">
-          <strong className="font-medium text-white/45">YouTube / Vimeo (fallback):</strong> still works,
-          but shows an external player with platform chrome. Use direct MP4 for the main film when
+          <strong className="font-medium text-white/45">YouTube / Vimeo (fallback):</strong> still works
+          for video URLs, but shows an external player. Use direct MP4 from R2 for the main film when
           possible.
         </p>
         <MediaUploadField
@@ -141,7 +143,7 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
           name="poster_url"
           kind="thumbnail"
           defaultValue={initial?.poster_url}
-          placeholder="https://… or upload JPG/PNG/WebP"
+          placeholder="https://….r2.dev/…/poster.jpg or upload"
           slugHint={slugHint}
         />
         <p className="-mt-2 text-xs text-white/30">
@@ -152,7 +154,7 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
           name="thumbnail_url"
           kind="thumbnail"
           defaultValue={initial?.thumbnail_url}
-          placeholder="https://… or upload JPG/PNG/WebP"
+          placeholder="https://….r2.dev/…/poster.jpg or upload"
           slugHint={slugHint}
         />
         <p className="-mt-2 text-xs text-white/30">
@@ -163,12 +165,11 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
           name="video_url"
           kind="video"
           defaultValue={initial?.video_url}
-          placeholder="https://….supabase.co/…/video.mp4, https://….r2.dev/…/film.mp4, or YouTube"
+          placeholder="https://….r2.dev/…/film.mp4 or YouTube"
           slugHint={slugHint}
         />
         <p className="-mt-2 text-xs text-white/30">
-          Native on-site player for direct MP4/WebM links. Multi-GB films: host on R2 or another CDN,
-          then paste the public URL — no file-size cap when linking externally.
+          Native on-site player for direct MP4/WebM links from R2 (up to 10 GB per upload).
         </p>
         <MediaUploadField
           label="Trailer URL"

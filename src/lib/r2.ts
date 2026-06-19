@@ -4,11 +4,12 @@ import {
   buildMediaPath,
   formatBytesDetailed,
   MEDIA_LIMITS,
+  VIDEO_MAX_BYTES,
   type MediaKind,
 } from "@/lib/media-upload";
 
 /** R2 free tier includes 10 GB storage — cap single admin uploads at 10 GB. */
-export const R2_MAX_BYTES = 10 * 1024 * 1024 * 1024;
+export const R2_MAX_BYTES = VIDEO_MAX_BYTES;
 
 export type R2Config = {
   accountId: string;
@@ -82,8 +83,9 @@ export function validateR2MediaFile(
     const exts = kind === "thumbnail" ? "JPG, PNG, or WebP" : "MP4, WebM, or MOV";
     return `Invalid file type. Use ${exts}.`;
   }
-  if (size > R2_MAX_BYTES) {
-    return `File too large for R2 (max ${formatBytesDetailed(R2_MAX_BYTES)}).`;
+  const maxBytes = MEDIA_LIMITS[kind].maxBytes;
+  if (size > maxBytes) {
+    return `File too large for R2 (max ${formatBytesDetailed(maxBytes)}).`;
   }
   return null;
 }

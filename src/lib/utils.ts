@@ -123,7 +123,7 @@ export function isDirectVideoUrl(url: string): boolean {
       parsed.hostname.includes("supabase.co") &&
       /\/storage\/v1\/object\/public\/media\/(videos|trailers)\//.test(parsed.pathname)
     ) {
-      return true;
+      return true; // legacy URLs from before R2-only storage
     }
   } catch {
     return false;

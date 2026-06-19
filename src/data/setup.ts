@@ -8,8 +8,6 @@ export const supabaseSetup = {
     "https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/auth/providers?provider=Email",
   rateLimitsUrl:
     "https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/auth/rate-limits",
-  storageSettingsUrl:
-    "https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/storage/settings",
 };
 
 export const r2Setup = {
