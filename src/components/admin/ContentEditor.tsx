@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveContent, type ContentFormState } from "@/app/admin/actions";
+import { MediaUploadField } from "@/components/admin/MediaUploadField";
 import { CATEGORIES } from "@/lib/types";
+import { slugify } from "@/lib/utils";
 
 type Initial = {
   id?: string;
@@ -23,6 +25,9 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
     saveContent,
     {},
   );
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [slug, setSlug] = useState(initial?.slug ?? "");
+  const slugHint = slug.trim() || slugify(title) || "draft";
 
   return (
     <form action={formAction} className="space-y-6">
@@ -35,8 +40,20 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
 
       <section className="space-y-4 rounded border border-white/[0.08] p-5">
         <h2 className="text-sm font-medium text-white/75">Details</h2>
-        <Field label="Title" name="title" defaultValue={initial?.title} required />
-        <Field label="Slug" name="slug" defaultValue={initial?.slug} placeholder="auto-from-title" />
+        <Field
+          label="Title"
+          name="title"
+          defaultValue={initial?.title}
+          required
+          onChange={(value) => setTitle(value)}
+        />
+        <Field
+          label="Slug"
+          name="slug"
+          defaultValue={initial?.slug}
+          placeholder="auto-from-title"
+          onChange={(value) => setSlug(value)}
+        />
         <div>
           <label className="mb-1.5 block text-xs text-white/45">Description</label>
           <textarea
@@ -80,10 +97,35 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
       </section>
 
       <section className="space-y-4 rounded border border-white/[0.08] p-5">
-        <h2 className="text-sm font-medium text-white/75">Media URLs</h2>
-        <Field label="Thumbnail URL" name="thumbnail_url" defaultValue={initial?.thumbnail_url} />
-        <Field label="Video URL (YouTube / Vimeo)" name="video_url" defaultValue={initial?.video_url} />
-        <Field label="Trailer URL (YouTube / Vimeo)" name="trailer_url" defaultValue={initial?.trailer_url} />
+        <h2 className="text-sm font-medium text-white/75">Media</h2>
+        <p className="text-xs text-white/35">
+          Paste a YouTube/Vimeo URL or upload MP4/WebM/MOV from your device (max 500 MB). Uploads
+          require <code className="text-white/50">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
+        </p>
+        <MediaUploadField
+          label="Thumbnail URL"
+          name="thumbnail_url"
+          kind="thumbnail"
+          defaultValue={initial?.thumbnail_url}
+          placeholder="https://… or upload JPG/PNG/WebP"
+          slugHint={slugHint}
+        />
+        <MediaUploadField
+          label="Video URL (YouTube / Vimeo / file)"
+          name="video_url"
+          kind="video"
+          defaultValue={initial?.video_url}
+          placeholder="https://youtube.com/… or upload MP4"
+          slugHint={slugHint}
+        />
+        <MediaUploadField
+          label="Trailer URL (YouTube / Vimeo / file)"
+          name="trailer_url"
+          kind="trailer"
+          defaultValue={initial?.trailer_url}
+          placeholder="https://vimeo.com/… or upload MP4"
+          slugHint={slugHint}
+        />
       </section>
 
       <button
@@ -104,6 +146,7 @@ function Field({
   defaultValue,
   placeholder,
   required,
+  onChange,
 }: {
   label: string;
   name: string;
@@ -111,6 +154,7 @@ function Field({
   defaultValue?: string;
   placeholder?: string;
   required?: boolean;
+  onChange?: (value: string) => void;
 }) {
   return (
     <div>
@@ -124,6 +168,7 @@ function Field({
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         className="input-field w-full rounded px-3 py-2 text-sm text-white placeholder:text-white/20"
       />
     </div>

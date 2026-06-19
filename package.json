@@ -10,7 +10,8 @@
     "db:setup": "open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "db:open": "open supabase/schema.sql",
     "db:copy": "pbcopy < supabase/schema.sql && echo 'Schema copied to clipboard.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
-    "db:admin": "pbcopy < supabase/promote-admin.sql && echo 'Admin SQL copied.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
+    "db:admin": "pbcopy < supabase/promote-admin.sql && echo 'Admin SQL copied.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
+    "db:storage": "pbcopy < supabase/storage.sql && echo 'Storage SQL copied.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

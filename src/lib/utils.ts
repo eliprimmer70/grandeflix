@@ -54,6 +54,33 @@ export function getEmbedUrl(url: string, autoplay = false): string | null {
   return `https://www.youtube.com/embed/${parsed.videoId}?autoplay=${play}&rel=0&modestbranding=1`;
 }
 
+export type VideoSource =
+  | { type: "embed"; url: string }
+  | { type: "direct"; url: string };
+
+export function isDirectVideoUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url.trim());
+    if (/\.(mp4|webm|mov)(\?|$)/i.test(parsed.pathname)) return true;
+    if (
+      parsed.hostname.includes("supabase.co") &&
+      /\/storage\/v1\/object\/public\/media\/(videos|trailers)\//.test(parsed.pathname)
+    ) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+export function getVideoSource(url: string, autoplay = false): VideoSource | null {
+  const embed = getEmbedUrl(url, autoplay);
+  if (embed) return { type: "embed", url: embed };
+  if (isDirectVideoUrl(url)) return { type: "direct", url: url.trim() };
+  return null;
+}
+
 export function isComingSoon(
   releaseDate: string | null,
   videoUrl?: string,

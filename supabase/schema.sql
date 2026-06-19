@@ -125,3 +125,5 @@ create policy "reminders_delete_own"
 -- select id, email, 'admin' from auth.users
 -- where lower(email) = lower('eli.primmer@gmail.com')
 -- on conflict (id) do update set role = 'admin';
+
+-- Storage bucket + policies for admin uploads: run supabase/storage.sql

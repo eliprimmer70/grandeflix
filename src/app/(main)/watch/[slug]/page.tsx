@@ -8,7 +8,7 @@ import { ContentRow } from "@/components/media/ContentRow";
 import { ReleaseBadge } from "@/components/ui/ReleaseBadge";
 import { RemindMeButton } from "@/components/media/RemindMeButton";
 import { getContentBySlug, getRelatedContent, getSessionUser, hasContentReminder } from "@/lib/content";
-import { getEmbedUrl, getReleaseBadge, canPlay, isComingSoon } from "@/lib/utils";
+import { getVideoSource, getReleaseBadge, canPlay, isComingSoon } from "@/lib/utils";
 import type { ContentRow as RowType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -38,12 +38,13 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
   const released = canPlay(item.releaseDate, item.videoUrl, item.comingSoon);
   const preview = isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon);
   const wantTrailer = trailerParam === "1" || (preview && item.trailerUrl);
-  const embedUrl =
+  const playbackUrl =
     wantTrailer && item.trailerUrl
-      ? getEmbedUrl(item.trailerUrl, true)
+      ? item.trailerUrl
       : released && item.videoUrl
-        ? getEmbedUrl(item.videoUrl, true)
+        ? item.videoUrl
         : null;
+  const videoSource = playbackUrl ? getVideoSource(playbackUrl, true) : null;
 
   const related = await getRelatedContent(item.category, item.id);
   const relatedRow: RowType | null =
@@ -59,8 +60,8 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
   return (
     <PageFade>
       <div className="min-h-screen bg-background pb-16 safe-bottom pt-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:pt-[calc(4.25rem+env(safe-area-inset-top,0px))]">
-        {embedUrl ? (
-          <VideoPlayer embedUrl={embedUrl} title={item.title} />
+        {videoSource ? (
+          <VideoPlayer source={videoSource} title={item.title} />
         ) : (
           <div className="relative flex aspect-video items-center justify-center bg-surface">
             {item.thumbnailUrl && (
