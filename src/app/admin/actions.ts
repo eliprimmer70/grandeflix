@@ -5,13 +5,26 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/content";
 import { slugify } from "@/lib/utils";
 
-export type ContentFormState = { error?: string };
+export type ContentFormState = { error?: string; ok?: boolean };
 
 function parseDate(value: FormDataEntryValue | null): string | null {
   const raw = String(value ?? "").trim();
   if (!raw) return null;
   const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function formatSaveError(message: string): string {
+  if (
+    message.includes("poster_url") ||
+    message.includes("release_date_tba")
+  ) {
+    return "Database schema is out of date. Run npm run db:content-columns in Supabase SQL Editor, then try again.";
+  }
+  if (message.includes("coming_soon")) {
+    return "Database is missing coming_soon. Run npm run db:coming-soon in Supabase SQL Editor, then try again.";
+  }
+  return message;
 }
 
 export async function saveContent(
@@ -29,6 +42,8 @@ export async function saveContent(
   const title = String(formData.get("title") ?? "").trim();
   if (!title) return { error: "Title is required." };
 
+  const releaseDateTba = formData.get("release_date_tba") === "on";
+
   const payload = {
     title,
     slug: slugify(String(formData.get("slug") || title)),
@@ -37,7 +52,8 @@ export async function saveContent(
     thumbnail_url: String(formData.get("thumbnail_url") ?? "").trim() || null,
     video_url: String(formData.get("video_url") ?? "").trim() || null,
     trailer_url: String(formData.get("trailer_url") ?? "").trim() || null,
-    release_date: parseDate(formData.get("release_date")),
+    release_date: releaseDateTba ? null : parseDate(formData.get("release_date")),
+    release_date_tba: releaseDateTba,
     coming_soon: formData.get("coming_soon") === "on",
     category: String(formData.get("category") ?? "fan-movies"),
     featured: formData.get("featured") === "on",
@@ -47,17 +63,26 @@ export async function saveContent(
     ? await supabase.from("content").update(payload).eq("id", id)
     : await supabase.from("content").insert(payload);
 
-  if (error) return { error: error.message };
+  if (error) return { error: formatSaveError(error.message) };
 
   revalidatePath("/");
   revalidatePath("/browse");
   revalidatePath("/admin");
   revalidatePath("/search");
-  redirect("/admin");
+  return { ok: true };
 }
 
-export async function deleteContent(id: string) {
-  const { supabase } = await requireAdmin();
+export async function deleteContent(formData: FormData) {
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return;
+
+  let supabase;
+  try {
+    ({ supabase } = await requireAdmin());
+  } catch {
+    redirect("/admin/denied");
+  }
+
   await supabase.from("content").delete().eq("id", id);
   revalidatePath("/");
   revalidatePath("/browse");

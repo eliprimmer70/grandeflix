@@ -32,16 +32,13 @@ export function BrowseNavbar() {
   }, []);
 
   useEffect(() => {
-    let supabase;
-    try {
-      supabase = createClient();
-    } catch {
-      return;
-    }
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    const client = createClient();
+    if (!client) return;
+
+    void client.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
       setInitial((user.email?.[0] ?? "G").toUpperCase());
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("profiles")
         .select("role")
         .eq("id", user.id)
@@ -51,12 +48,9 @@ export function BrowseNavbar() {
   }, []);
 
   async function signOut() {
-    let supabase;
-    try {
-      supabase = createClient();
-    } catch {
-      return;
-    }
+    const supabase = createClient();
+    if (!supabase) return;
+
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();

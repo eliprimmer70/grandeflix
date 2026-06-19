@@ -54,7 +54,9 @@ Run **`supabase/storage.sql`** in the SQL Editor (or `npm run db:storage`) to cr
 
 If the bucket already exists with a lower limit, run **`supabase/migrate-storage-1gb.sql`** (or `npm run db:storage-1gb`).
 
-**Note:** Supabase **Pro** may be required for uploads over 50 MB on some hosted plans; the app and bucket are configured for 1 GB once your Supabase project allows it.
+To apply the bucket limit via API (requires Pro + raised global limit): `npm run db:storage-1gb:apply`. Check current limits: `npm run db:storage:check`.
+
+**Enforced limit:** Supabase applies the **lower** of (1) global Storage Settings limit, (2) bucket `file_size_limit`, and (3) app validation. On the **Free tier**, the global cap is **50 MB** — raising the bucket to 1 GB in SQL or via API will fail until you upgrade to **Pro** and increase **Storage → Settings → Global file size limit**. For large videos on Free, paste a **YouTube/Vimeo URL** instead of uploading.
 
 ---
 

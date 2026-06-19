@@ -25,14 +25,15 @@ export default async function EditContentPage({ params }: EditPageProps) {
             title: item.title,
             slug: item.slug,
             description: item.description,
-            poster_url: item.poster_url ?? "",
+            poster_url: item.poster_url ?? item.thumbnail_url ?? "",
             thumbnail_url: item.thumbnail_url ?? "",
             video_url: item.video_url ?? "",
             trailer_url: item.trailer_url ?? "",
             release_date: item.release_date ?? undefined,
-            coming_soon: item.coming_soon,
+            release_date_tba: item.release_date_tba ?? false,
+            coming_soon: item.coming_soon ?? false,
             category: item.category,
-            featured: item.featured,
+            featured: item.featured ?? false,
           }}
         />
       </div>

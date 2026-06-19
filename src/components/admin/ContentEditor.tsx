@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { saveContent, type ContentFormState } from "@/app/admin/actions";
 import { MediaUploadField } from "@/components/admin/MediaUploadField";
 import { CATEGORIES } from "@/lib/types";
-import { slugify } from "@/lib/utils";
+import { formatDateInputValue, slugify } from "@/lib/utils";
 
 type Initial = {
   id?: string;
@@ -16,19 +17,26 @@ type Initial = {
   video_url?: string;
   trailer_url?: string;
   release_date?: string;
+  release_date_tba?: boolean;
   coming_soon?: boolean;
   category?: string;
   featured?: boolean;
 };
 
 export function ContentEditor({ initial }: { initial?: Initial }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState<ContentFormState, FormData>(
     saveContent,
     {},
   );
   const [title, setTitle] = useState(initial?.title ?? "");
   const [slug, setSlug] = useState(initial?.slug ?? "");
+  const [releaseDateTba, setReleaseDateTba] = useState(initial?.release_date_tba ?? false);
   const slugHint = slug.trim() || slugify(title) || "draft";
+
+  useEffect(() => {
+    if (state.ok) router.replace("/admin");
+  }, [state.ok, router]);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -82,10 +90,21 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
           label="Release date"
           name="release_date"
           type="date"
-          defaultValue={initial?.release_date?.slice(0, 10)}
+          defaultValue={formatDateInputValue(initial?.release_date)}
+          disabled={releaseDateTba}
         />
+        <label className="flex items-center gap-2 text-sm text-white/65">
+          <input
+            type="checkbox"
+            name="release_date_tba"
+            checked={releaseDateTba}
+            onChange={(e) => setReleaseDateTba(e.target.checked)}
+          />
+          Release date not announced yet (shows TBA badge instead of a date)
+        </label>
         <p className="text-xs text-white/30">
-          Future dates show as COMING [DATE]. Leave empty if already released.
+          Future dates show as COMING [DATE]. Check TBA when the release date is unknown. Leave empty
+          if already released.
         </p>
         <label className="flex items-center gap-2 text-sm text-white/65">
           <input type="checkbox" name="coming_soon" defaultChecked={initial?.coming_soon} />
@@ -162,6 +181,7 @@ function Field({
   placeholder,
   required,
   onChange,
+  disabled,
 }: {
   label: string;
   name: string;
@@ -170,6 +190,7 @@ function Field({
   placeholder?: string;
   required?: boolean;
   onChange?: (value: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -183,8 +204,9 @@ function Field({
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
+        disabled={disabled}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-        className="input-field w-full rounded px-3 py-2 text-sm text-white placeholder:text-white/20"
+        className="input-field w-full rounded px-3 py-2 text-sm text-white placeholder:text-white/20 disabled:cursor-not-allowed disabled:opacity-40"
       />
     </div>
   );

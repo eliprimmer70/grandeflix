@@ -18,7 +18,9 @@ export function MediaCard({
   showBadge?: boolean;
   onPreview?: (item: ContentItem) => void;
 }) {
-  const badge = showBadge ? getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon) : null;
+  const badge = showBadge
+    ? getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon, item.releaseDateTba)
+    : null;
   const canHover = useCanHover();
 
   return (

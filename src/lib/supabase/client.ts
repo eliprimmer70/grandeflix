@@ -3,8 +3,6 @@ import { getSupabaseEnv } from "./env";
 
 export function createClient() {
   const env = getSupabaseEnv();
-  if (!env) {
-    throw new Error("Supabase is not configured.");
-  }
+  if (!env) return null;
   return createBrowserClient(env.url, env.key);
 }

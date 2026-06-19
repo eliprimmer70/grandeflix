@@ -3,8 +3,119 @@ export const MEDIA_BUCKET = "media";
 export const STORAGE_SETUP_MESSAGE =
   'Storage bucket "media" not found. Run npm run db:storage, then paste the SQL in the Supabase SQL Editor and click Run.';
 
-/** Map cryptic Supabase Storage errors to the storage.sql setup hint. */
-export function formatStorageError(message?: string | null): string {
+/** Supabase Free tier global upload cap (also default bucket limit on Free). */
+export const SUPABASE_FREE_TIER_MAX_BYTES = 50 * 1024 * 1024; // 52428800
+
+export const ONE_GB_BYTES = 1024 * 1024 * 1024; // 1073741824
+
+export type MediaKind = "video" | "thumbnail" | "trailer";
+
+const VIDEO_MIMES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+const THUMB_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+export const MEDIA_LIMITS = {
+  video: { maxBytes: ONE_GB_BYTES, mimes: VIDEO_MIMES, label: "1 GB" },
+  trailer: { maxBytes: ONE_GB_BYTES, mimes: VIDEO_MIMES, label: "1 GB" },
+  thumbnail: { maxBytes: 10 * 1024 * 1024, mimes: THUMB_MIMES, label: "10 MB" },
+} as const;
+
+export type MediaUploadLimit = {
+  maxBytes: number;
+  label: string;
+  appMaxBytes: number;
+  appLabel: string;
+  bucketMaxBytes: number | null;
+  bucketLabel: string | null;
+  limitedByPlan: boolean;
+};
+
+export function formatBytes(bytes: number): string {
+  if (bytes >= ONE_GB_BYTES && bytes % ONE_GB_BYTES === 0) {
+    return `${bytes / ONE_GB_BYTES} GB`;
+  }
+  if (bytes >= 1024 * 1024) {
+    const mb = bytes / (1024 * 1024);
+    return Number.isInteger(mb) ? `${mb} MB` : `${mb.toFixed(1)} MB`;
+  }
+  if (bytes >= 1024) {
+    const kb = bytes / 1024;
+    return Number.isInteger(kb) ? `${kb} KB` : `${kb.toFixed(1)} KB`;
+  }
+  return `${bytes} B`;
+}
+
+export function isLikelyFreeTierCap(bucketFileSizeLimit: number | null | undefined): boolean {
+  return bucketFileSizeLimit != null && bucketFileSizeLimit <= SUPABASE_FREE_TIER_MAX_BYTES;
+}
+
+export function effectiveUploadLimitBytes(
+  kind: MediaKind,
+  bucketFileSizeLimit: number | null | undefined
+): number {
+  const appLimit = MEDIA_LIMITS[kind].maxBytes;
+  if (bucketFileSizeLimit == null) return appLimit;
+  return Math.min(appLimit, bucketFileSizeLimit);
+}
+
+export function buildMediaUploadLimit(
+  kind: MediaKind,
+  bucketFileSizeLimit: number | null | undefined
+): MediaUploadLimit {
+  const app = MEDIA_LIMITS[kind];
+  const maxBytes = effectiveUploadLimitBytes(kind, bucketFileSizeLimit);
+  const limitedByPlan =
+    bucketFileSizeLimit != null &&
+    bucketFileSizeLimit < app.maxBytes &&
+    isLikelyFreeTierCap(bucketFileSizeLimit);
+
+  return {
+    maxBytes,
+    label: formatBytes(maxBytes),
+    appMaxBytes: app.maxBytes,
+    appLabel: app.label,
+    bucketMaxBytes: bucketFileSizeLimit ?? null,
+    bucketLabel: bucketFileSizeLimit != null ? formatBytes(bucketFileSizeLimit) : null,
+    limitedByPlan,
+  };
+}
+
+export function formatUploadSizeError(
+  kind: MediaKind,
+  fileSize: number,
+  bucketFileSizeLimit: number | null | undefined
+): string {
+  const limit = buildMediaUploadLimit(kind, bucketFileSizeLimit);
+
+  if (fileSize <= limit.maxBytes) {
+    return formatStorageSizeFailure(limit);
+  }
+
+  if (limit.limitedByPlan) {
+    return `File too large for current Supabase plan (max ${limit.label}). Upgrade to Pro or use a YouTube/Vimeo URL.`;
+  }
+
+  if (limit.bucketMaxBytes != null && limit.bucketMaxBytes < limit.appMaxBytes) {
+    return `File too large for the storage bucket (max ${limit.label}). Run npm run db:storage-1gb in Supabase SQL Editor, or paste a YouTube/Vimeo URL instead.`;
+  }
+
+  return `File too large. Max size is ${limit.label}.`;
+}
+
+function formatStorageSizeFailure(limit: MediaUploadLimit): string {
+  if (limit.limitedByPlan) {
+    return `Upload rejected by Supabase (max ${limit.label} on Free tier). Upgrade to Pro or use a YouTube/Vimeo URL.`;
+  }
+  if (limit.bucketMaxBytes != null && limit.bucketMaxBytes < limit.appMaxBytes) {
+    return `Upload rejected by Supabase Storage (bucket max ${limit.label}). Run npm run db:storage-1gb or use a YouTube/Vimeo URL.`;
+  }
+  return `Upload rejected — file exceeds the ${limit.label} limit.`;
+}
+
+/** Map cryptic Supabase Storage errors to actionable admin messages. */
+export function formatStorageError(
+  message?: string | null,
+  context?: { kind?: MediaKind; bucketFileSizeLimit?: number | null }
+): string {
   if (!message) return STORAGE_SETUP_MESSAGE;
   const lower = message.toLowerCase();
   if (
@@ -14,21 +125,26 @@ export function formatStorageError(message?: string | null): string {
   ) {
     return STORAGE_SETUP_MESSAGE;
   }
+
+  const isSizeError =
+    lower.includes("exceeded the maximum allowed size") ||
+    lower.includes("payload too large") ||
+    lower.includes("entity too large") ||
+    lower.includes("file too large");
+
+  if (isSizeError) {
+    if (context?.kind) {
+      return formatStorageSizeFailure(
+        buildMediaUploadLimit(context.kind, context.bucketFileSizeLimit)
+      );
+    }
+    return `File too large for Supabase Storage (Free tier max ${formatBytes(
+      SUPABASE_FREE_TIER_MAX_BYTES
+    )}). Upgrade to Pro or use a YouTube/Vimeo URL.`;
+  }
+
   return message;
 }
-
-export type MediaKind = "video" | "thumbnail" | "trailer";
-
-const VIDEO_MIMES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
-const THUMB_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-const ONE_GB = 1024 * 1024 * 1024; // 1073741824
-
-export const MEDIA_LIMITS = {
-  video: { maxBytes: ONE_GB, mimes: VIDEO_MIMES, label: "1 GB" },
-  trailer: { maxBytes: ONE_GB, mimes: VIDEO_MIMES, label: "1 GB" },
-  thumbnail: { maxBytes: 10 * 1024 * 1024, mimes: THUMB_MIMES, label: "10 MB" },
-} as const;
 
 export function mediaFolder(kind: MediaKind): string {
   if (kind === "video") return "videos";
@@ -41,15 +157,21 @@ export function sanitizeUploadFilename(name: string): string {
   return base.slice(0, 120) || "file";
 }
 
-export function validateMediaFile(kind: MediaKind, file: File): string | null {
+export function validateMediaFile(
+  kind: MediaKind,
+  file: File,
+  bucketFileSizeLimit?: number | null
+): string | null {
   const limits = MEDIA_LIMITS[kind];
   if (!limits.mimes.has(file.type)) {
     const exts =
       kind === "thumbnail" ? "JPG, PNG, or WebP" : "MP4, WebM, or MOV";
     return `Invalid file type. Use ${exts}.`;
   }
-  if (file.size > limits.maxBytes) {
-    return `File too large. Max size is ${limits.label}.`;
+
+  const effective = buildMediaUploadLimit(kind, bucketFileSizeLimit);
+  if (file.size > effective.maxBytes) {
+    return formatUploadSizeError(kind, file.size, bucketFileSizeLimit);
   }
   return null;
 }

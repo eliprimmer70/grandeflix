@@ -107,7 +107,7 @@ export async function getContentRows() {
     items: mapped.filter(
       (item) =>
         item.category === cat.value &&
-        !isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon),
+        !isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon, item.releaseDateTba),
     ),
   })).filter((row) => row.items.length > 0);
 }
@@ -178,8 +178,10 @@ export async function getComingSoonContent() {
   const all = await fetchAllContent();
   return all
     .map(mapContent)
-    .filter((item) => isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon))
+    .filter((item) => isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon, item.releaseDateTba))
     .sort((a, b) => {
+      if (a.releaseDateTba && !b.releaseDateTba) return 1;
+      if (!a.releaseDateTba && b.releaseDateTba) return -1;
       if (a.releaseDate && b.releaseDate) {
         return new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime();
       }
@@ -211,9 +213,26 @@ export async function hasContentReminder(userId: string, contentId: string): Pro
   return Boolean(data);
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function getContentByIdAdmin(id: string) {
+  const trimmed = id.trim();
+  if (!UUID_RE.test(trimmed)) return null;
+
   const supabase = await createClient();
   if (!supabase) return null;
-  const { data } = await supabase.from("content").select("*").eq("id", id).maybeSingle();
-  return data as DbContent | null;
+
+  const { data, error } = await supabase
+    .from("content")
+    .select("*")
+    .eq("id", trimmed)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[getContentByIdAdmin]", error.message);
+    return null;
+  }
+
+  return (data as DbContent | null) ?? null;
 }

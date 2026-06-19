@@ -41,6 +41,10 @@ export function SignUpForm() {
     try {
       const form = new FormData(e.currentTarget);
       const supabase = createClient();
+      if (!supabase) {
+        setError("Authentication is not configured.");
+        return;
+      }
       const { data, error: authError } = await supabase.auth.signUp({
         email: String(form.get("email")),
         password: String(form.get("password")),

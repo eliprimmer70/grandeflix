@@ -25,11 +25,29 @@ export function mapContent(row: import("./types").DbContent): import("./types").
     videoUrl: row.video_url ?? undefined,
     trailerUrl: row.trailer_url ?? undefined,
     releaseDate: row.release_date,
+    releaseDateTba: row.release_date_tba ?? false,
     comingSoon: row.coming_soon ?? false,
     category: row.category,
     featured: row.featured,
     createdAt: row.created_at,
   };
+}
+
+/** Format DB timestamptz for `<input type="date">` without throwing on bad values. */
+export function formatDateInputValue(value: unknown): string | undefined {
+  if (value == null || value === "") return undefined;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10);
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().slice(0, 10);
+    return undefined;
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  return undefined;
 }
 
 export function slugify(text: string): string {
@@ -100,7 +118,9 @@ export function isComingSoon(
   releaseDate: string | null,
   videoUrl?: string,
   comingSoon = false,
+  releaseDateTba = false,
 ): boolean {
+  if (releaseDateTba) return true;
   if (comingSoon) return true;
   if (releaseDate && new Date(releaseDate) > new Date()) return true;
   if (!videoUrl) return true;
@@ -111,7 +131,9 @@ export function canPlay(
   releaseDate: string | null,
   videoUrl?: string,
   comingSoon = false,
+  releaseDateTba = false,
 ): boolean {
+  if (releaseDateTba) return false;
   if (comingSoon) return false;
   if (!videoUrl) return false;
   if (releaseDate && new Date(releaseDate) > new Date()) return false;
@@ -122,8 +144,13 @@ export function getReleaseBadge(
   releaseDate: string | null,
   videoUrl?: string,
   comingSoon = false,
+  releaseDateTba = false,
 ): ReleaseBadge | null {
-  if (!isComingSoon(releaseDate, videoUrl, comingSoon)) return null;
+  if (!isComingSoon(releaseDate, videoUrl, comingSoon, releaseDateTba)) return null;
+
+  if (releaseDateTba) {
+    return { label: "RELEASE DATE NOT ANNOUNCED YET", variant: "tba" };
+  }
 
   if (releaseDate) {
     const release = new Date(releaseDate);

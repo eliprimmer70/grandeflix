@@ -17,6 +17,7 @@ create table if not exists public.content (
   video_url text,
   trailer_url text,
   release_date timestamptz,
+  release_date_tba boolean not null default false,
   coming_soon boolean not null default false,
   category text not null,
   featured boolean not null default false,

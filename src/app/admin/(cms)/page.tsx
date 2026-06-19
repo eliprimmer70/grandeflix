@@ -34,7 +34,12 @@ export default async function AdminPage() {
             </p>
           )}
           {items.map((item) => {
-            const badge = getReleaseBadge(item.release_date, item.video_url ?? undefined, item.coming_soon);
+            const badge = getReleaseBadge(
+              item.release_date,
+              item.video_url ?? undefined,
+              item.coming_soon,
+              item.release_date_tba,
+            );
             const cat = CATEGORIES.find((c) => c.value === item.category)?.label ?? item.category;
             return (
               <article key={item.id} className="rounded-xl border border-white/[0.08] bg-surface/40 p-4">
@@ -46,7 +51,8 @@ export default async function AdminPage() {
                   <Link href={`/admin/content/${item.id}/edit`} className="text-sm text-brand-bright">
                     Edit
                   </Link>
-                  <form action={deleteContent.bind(null, item.id)}>
+                  <form action={deleteContent}>
+                    <input type="hidden" name="id" value={item.id} />
                     <button type="submit" className="text-sm text-red-400/70">
                       Delete
                     </button>
@@ -76,7 +82,12 @@ export default async function AdminPage() {
                 </tr>
               )}
               {items.map((item) => {
-                const badge = getReleaseBadge(item.release_date, item.video_url ?? undefined, item.coming_soon);
+                const badge = getReleaseBadge(
+              item.release_date,
+              item.video_url ?? undefined,
+              item.coming_soon,
+              item.release_date_tba,
+            );
                 const cat = CATEGORIES.find((c) => c.value === item.category)?.label ?? item.category;
                 return (
                   <tr key={item.id} className="border-b border-white/[0.05]">
@@ -96,7 +107,8 @@ export default async function AdminPage() {
                       <Link href={`/admin/content/${item.id}/edit`} className="mr-3 text-white/50 hover:text-white">
                         Edit
                       </Link>
-                      <form action={deleteContent.bind(null, item.id)} className="inline">
+                      <form action={deleteContent} className="inline">
+                        <input type="hidden" name="id" value={item.id} />
                         <button type="submit" className="text-red-400/60 hover:text-red-400">
                           Delete
                         </button>

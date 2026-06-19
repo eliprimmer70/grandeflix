@@ -24,6 +24,7 @@ export interface DbContent {
   video_url: string | null;
   trailer_url: string | null;
   release_date: string | null;
+  release_date_tba: boolean;
   coming_soon: boolean;
   category: string;
   featured: boolean;
@@ -40,6 +41,7 @@ export interface ContentItem {
   videoUrl?: string;
   trailerUrl?: string;
   releaseDate: string | null;
+  releaseDateTba: boolean;
   comingSoon: boolean;
   category: string;
   featured: boolean;
@@ -55,7 +57,7 @@ export interface ContentRow {
 
 export interface ReleaseBadge {
   label: string;
-  variant: "soon" | "dated";
+  variant: "soon" | "dated" | "tba";
 }
 
 export const CATEGORIES: { value: ContentCategory; label: string }[] = [

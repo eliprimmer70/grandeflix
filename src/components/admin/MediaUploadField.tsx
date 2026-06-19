@@ -1,12 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { prepareMediaUpload } from "@/app/admin/upload-actions";
+import { useEffect, useRef, useState } from "react";
+import {
+  getMediaUploadLimits,
+  prepareMediaUpload,
+} from "@/app/admin/upload-actions";
 import {
   formatStorageError,
-  MEDIA_LIMITS,
   validateMediaFile,
   type MediaKind,
+  type MediaUploadLimit,
 } from "@/lib/media-upload";
 import { createClient } from "@/lib/supabase/client";
 
@@ -32,6 +35,24 @@ export function MediaUploadField({
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploadLimit, setUploadLimit] = useState<MediaUploadLimit | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void getMediaUploadLimits()
+      .then((result) => {
+        if (cancelled || "error" in result) return;
+        setUploadLimit(result[kind]);
+      })
+      .catch(() => {
+        /* limits are optional; static fallbacks apply */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [kind]);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -41,7 +62,7 @@ export function MediaUploadField({
     setError(null);
     setMessage(null);
 
-    const clientError = validateMediaFile(kind, file);
+    const clientError = validateMediaFile(kind, file, uploadLimit?.bucketMaxBytes);
     if (clientError) {
       setError(clientError);
       return;
@@ -80,7 +101,12 @@ export function MediaUploadField({
         });
 
       if (uploadError) {
-        setError(formatStorageError(uploadError.message));
+        setError(
+          formatStorageError(uploadError.message, {
+            kind,
+            bucketFileSizeLimit: uploadLimit?.bucketMaxBytes,
+          })
+        );
         setMessage(null);
         return;
       }
@@ -99,6 +125,11 @@ export function MediaUploadField({
     kind === "thumbnail"
       ? "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
       : "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov";
+
+  const maxLabel = uploadLimit?.label ?? "…";
+  const limitHint = uploadLimit?.limitedByPlan
+    ? `Max ${maxLabel} on Free tier — Pro or YouTube/Vimeo for larger files`
+    : `Max ${maxLabel}`;
 
   return (
     <div>
@@ -126,7 +157,7 @@ export function MediaUploadField({
           />
           {uploading ? "Uploading…" : "Or upload from device"}
         </label>
-        <span className="text-xs text-white/30">Max {MEDIA_LIMITS[kind].label}</span>
+        <span className="text-xs text-white/30">{limitHint}</span>
       </div>
       {message && !error && <p className="mt-1.5 text-xs text-emerald-400/80">{message}</p>}
       {error && <p className="mt-1.5 text-xs text-red-300">{error}</p>}

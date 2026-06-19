@@ -36,8 +36,18 @@ export function Hero({ featured }: { featured: ContentItem | null }) {
     );
   }
 
-  const badge = getReleaseBadge(featured.releaseDate, featured.videoUrl, featured.comingSoon);
-  const released = canPlay(featured.releaseDate, featured.videoUrl, featured.comingSoon);
+  const badge = getReleaseBadge(
+    featured.releaseDate,
+    featured.videoUrl,
+    featured.comingSoon,
+    featured.releaseDateTba,
+  );
+  const released = canPlay(
+    featured.releaseDate,
+    featured.videoUrl,
+    featured.comingSoon,
+    featured.releaseDateTba,
+  );
   const hasTrailer = Boolean(featured.trailerUrl);
 
   return (

@@ -3,12 +3,15 @@
 import { requireAdmin } from "@/lib/content";
 import {
   buildMediaPath,
+  buildMediaUploadLimit,
   formatStorageError,
+  formatUploadSizeError,
   getPublicMediaUrl,
   MEDIA_BUCKET,
   MEDIA_LIMITS,
   STORAGE_SETUP_MESSAGE,
   type MediaKind,
+  type MediaUploadLimit,
 } from "@/lib/media-upload";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getSupabaseEnv } from "@/lib/supabase/env";
@@ -21,11 +24,61 @@ export type UploadPrepareResult =
     }
   | { error: string };
 
-function validateServerMedia(kind: MediaKind, contentType: string, size: number): string | null {
+export type MediaUploadLimitsResult =
+  | Record<MediaKind, MediaUploadLimit>
+  | { error: string };
+
+async function getMediaBucketLimit(): Promise<
+  { limit: number | null } | { error: string }
+> {
+  const service = createServiceRoleClient();
+  if (!service) {
+    return {
+      error:
+        "Uploads require SUPABASE_SERVICE_ROLE_KEY on the server. Add it in Vercel env vars (not NEXT_PUBLIC) and redeploy.",
+    };
+  }
+
+  const { data: bucket, error } = await service.storage.getBucket(MEDIA_BUCKET);
+  if (error) {
+    return { error: formatStorageError(error.message) };
+  }
+  if (!bucket) {
+    return { error: STORAGE_SETUP_MESSAGE };
+  }
+
+  return { limit: bucket.file_size_limit ?? null };
+}
+
+function validateServerMedia(
+  kind: MediaKind,
+  contentType: string,
+  size: number,
+  bucketFileSizeLimit: number | null
+): string | null {
   const limits = MEDIA_LIMITS[kind];
   if (!limits.mimes.has(contentType)) return "Invalid file type.";
-  if (size > limits.maxBytes) return `File exceeds ${limits.label} limit.`;
+  if (size > buildMediaUploadLimit(kind, bucketFileSizeLimit).maxBytes) {
+    return formatUploadSizeError(kind, size, bucketFileSizeLimit);
+  }
   return null;
+}
+
+export async function getMediaUploadLimits(): Promise<MediaUploadLimitsResult> {
+  try {
+    await requireAdmin();
+  } catch {
+    return { error: "Unauthorized." };
+  }
+
+  const bucketResult = await getMediaBucketLimit();
+  if ("error" in bucketResult) return bucketResult;
+
+  return {
+    video: buildMediaUploadLimit("video", bucketResult.limit),
+    trailer: buildMediaUploadLimit("trailer", bucketResult.limit),
+    thumbnail: buildMediaUploadLimit("thumbnail", bucketResult.limit),
+  };
 }
 
 export async function prepareMediaUpload(input: {
@@ -44,6 +97,18 @@ export async function prepareMediaUpload(input: {
   const env = getSupabaseEnv();
   if (!env) return { error: "Supabase is not configured." };
 
+  const bucketResult = await getMediaBucketLimit();
+  if ("error" in bucketResult) return { error: bucketResult.error };
+  const bucketFileSizeLimit = bucketResult.limit;
+
+  const validationError = validateServerMedia(
+    input.kind,
+    input.contentType,
+    input.size,
+    bucketFileSizeLimit
+  );
+  if (validationError) return { error: validationError };
+
   const service = createServiceRoleClient();
   if (!service) {
     return {
@@ -52,22 +117,17 @@ export async function prepareMediaUpload(input: {
     };
   }
 
-  const validationError = validateServerMedia(input.kind, input.contentType, input.size);
-  if (validationError) return { error: validationError };
-
-  const { data: buckets, error: bucketsError } = await service.storage.listBuckets();
-  if (bucketsError) {
-    return { error: formatStorageError(bucketsError.message) };
-  }
-  if (!buckets?.some((bucket) => bucket.id === MEDIA_BUCKET)) {
-    return { error: STORAGE_SETUP_MESSAGE };
-  }
-
   const path = buildMediaPath(input.kind, input.slug?.trim() || "draft", input.filename);
+  // Signed upload URLs inherit bucket + global Supabase limits; no per-URL size override.
   const { data, error } = await service.storage.from(MEDIA_BUCKET).createSignedUploadUrl(path);
 
   if (error || !data) {
-    return { error: formatStorageError(error?.message) };
+    return {
+      error: formatStorageError(error?.message, {
+        kind: input.kind,
+        bucketFileSizeLimit,
+      }),
+    };
   }
 
   return {

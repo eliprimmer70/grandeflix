@@ -27,6 +27,11 @@ export function LoginForm() {
 
     const form = new FormData(e.currentTarget);
     const supabase = createClient();
+    if (!supabase) {
+      setLoading(false);
+      setError("Authentication is not configured.");
+      return;
+    }
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: String(form.get("email")),
       password: String(form.get("password")),

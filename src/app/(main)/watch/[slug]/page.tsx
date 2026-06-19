@@ -34,9 +34,14 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
   const user = await getSessionUser();
   const reminded = user ? await hasContentReminder(user.id, item.id) : false;
 
-  const badge = getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon);
-  const released = canPlay(item.releaseDate, item.videoUrl, item.comingSoon);
-  const preview = isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon);
+  const badge = getReleaseBadge(
+    item.releaseDate,
+    item.videoUrl,
+    item.comingSoon,
+    item.releaseDateTba,
+  );
+  const released = canPlay(item.releaseDate, item.videoUrl, item.comingSoon, item.releaseDateTba);
+  const preview = isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon, item.releaseDateTba);
   const wantTrailer = trailerParam === "1" || (preview && item.trailerUrl);
   const playbackUrl =
     wantTrailer && item.trailerUrl
@@ -81,11 +86,13 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
           )}
           {badge && <div className="mt-2"><ReleaseBadge badge={badge} /></div>}
           <h1 className="mt-3 font-display text-2xl font-bold text-white md:text-3xl">{item.title}</h1>
-          {item.releaseDate && (
+          {item.releaseDateTba ? (
+            <p className="mt-2 text-xs text-white/40">Release date not announced yet</p>
+          ) : item.releaseDate ? (
             <p className="mt-2 text-xs text-white/40">
               Release: {new Date(item.releaseDate).toLocaleDateString("en-US", { dateStyle: "long" })}
             </p>
-          )}
+          ) : null}
           {item.description && (
             <p className="mt-5 text-[15px] leading-relaxed text-white/65">{item.description}</p>
           )}
