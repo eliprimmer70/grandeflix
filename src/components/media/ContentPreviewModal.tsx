@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import type { ContentItem } from "@/lib/types";
@@ -50,11 +51,17 @@ export function ContentPreviewModal({
   signedIn?: boolean;
   initialReminded?: boolean;
 }) {
+  const [mounted, setMounted] = useState(false);
   const [showTrailer, setShowTrailer] = useState(false);
 
-  const badge = getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon);
-  const released = canPlay(item.releaseDate, item.videoUrl, item.comingSoon);
-  const preview = isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon);
+  const badge = getReleaseBadge(
+    item.releaseDate,
+    item.videoUrl,
+    item.comingSoon,
+    item.releaseDateTba,
+  );
+  const released = canPlay(item.releaseDate, item.videoUrl, item.comingSoon, item.releaseDateTba);
+  const preview = isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon, item.releaseDateTba);
   const hasTrailer = Boolean(item.trailerUrl);
   const trailerSource =
     showTrailer && item.trailerUrl ? getVideoSource(item.trailerUrl, true) : null;
@@ -63,6 +70,10 @@ export function ContentPreviewModal({
     setShowTrailer(false);
     onClose();
   }, [onClose]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -84,7 +95,9 @@ export function ContentPreviewModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [handleClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       <motion.div
         key="backdrop"
@@ -92,7 +105,7 @@ export function ContentPreviewModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-end justify-center bg-black/90 sm:items-center sm:p-6"
+        className="fixed inset-0 z-[100] flex items-end justify-center bg-black/95 sm:items-center sm:p-4"
         onClick={handleClose}
         role="presentation"
       >
@@ -102,7 +115,7 @@ export function ContentPreviewModal({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 32 }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="relative flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface-raised shadow-2xl ring-1 ring-white/[0.08] sm:max-h-[min(90vh,640px)] sm:max-w-lg sm:rounded-2xl"
+          className="relative w-full max-w-md overflow-hidden rounded-t-2xl bg-surface-raised shadow-2xl ring-1 ring-white/[0.08] sm:rounded-2xl lg:max-w-lg"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
@@ -111,64 +124,60 @@ export function ContentPreviewModal({
           <button
             type="button"
             onClick={handleClose}
-            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white/80 ring-1 ring-white/10 transition hover:bg-black/80 hover:text-white"
+            className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white/80 ring-1 ring-white/10 transition hover:bg-black/90 hover:text-white"
             aria-label="Close preview"
           >
             <CloseIcon />
           </button>
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto safe-bottom">
-            <div className="page-x space-y-4 py-5 pr-12 sm:py-6">
-              {trailerSource && (
-                <div className="aspect-video max-h-48 w-full overflow-hidden rounded-lg bg-black ring-1 ring-white/10">
+          <div className="max-h-[85dvh] overflow-y-auto safe-bottom">
+            <div className="space-y-4 p-5 pr-12 sm:p-6">
+              {trailerSource ? (
+                <div className="aspect-video w-full overflow-hidden rounded-lg bg-black ring-1 ring-white/10">
                   <VideoPlayer source={trailerSource} title={`${item.title} trailer`} />
                 </div>
+              ) : (
+                <div className="mx-auto w-28 max-h-40 shrink-0 overflow-hidden rounded-lg bg-black ring-1 ring-white/10 sm:mx-0 sm:float-left sm:mr-4 sm:w-32 sm:max-h-44">
+                  <div className="aspect-[2/3] max-h-40 sm:max-h-44">
+                    <ContentThumbnail
+                      src={getPosterUrl(item)}
+                      title={item.title}
+                      priority
+                      sizes="128px"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </div>
               )}
 
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                {!trailerSource && (
-                  <div className="w-28 shrink-0 sm:w-32">
-                    <div className="aspect-video max-h-48 w-full overflow-hidden rounded-lg bg-black ring-1 ring-white/10">
-                      <ContentThumbnail
-                        src={getPosterUrl(item)}
-                        title={item.title}
-                        priority
-                        sizes="112px"
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
+              <div className="min-w-0 space-y-2 sm:overflow-hidden">
+                {item.category && (
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+                    {categoryLabel(item.category)}
+                  </p>
                 )}
 
-                <div className="min-w-0 flex-1 space-y-2 pt-0.5 text-center sm:text-left">
-                  {item.category && (
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
-                      {categoryLabel(item.category)}
-                    </p>
-                  )}
-
-                  <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                    {badge && <ReleaseBadge badge={badge} />}
-                    {item.releaseDate ? (
-                      <span className="text-xs text-white/45">
-                        {new Date(item.releaseDate).toLocaleDateString("en-US", { dateStyle: "long" })}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-white/45">TBA</span>
-                    )}
-                  </div>
-
-                  <h2 id="preview-title" className="font-display text-lg font-bold leading-tight text-white sm:text-xl">
-                    {item.title}
-                  </h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  {badge && <ReleaseBadge badge={badge} />}
+                  {item.releaseDateTba ? (
+                    <span className="text-xs text-white/45">Release date not announced yet</span>
+                  ) : item.releaseDate ? (
+                    <span className="text-xs text-white/45">
+                      {new Date(item.releaseDate).toLocaleDateString("en-US", { dateStyle: "long" })}
+                    </span>
+                  ) : null}
                 </div>
+
+                <h2 id="preview-title" className="font-display text-lg font-bold leading-tight text-white sm:text-xl">
+                  {item.title}
+                </h2>
+
+                {item.description && (
+                  <p className="text-sm leading-relaxed text-white/65">{item.description}</p>
+                )}
               </div>
 
-              {item.description && (
-                <p className="text-sm leading-relaxed text-white/65">{item.description}</p>
-              )}
-
-              <div className="flex flex-wrap items-center justify-center gap-2.5 sm:justify-start">
+              <div className="clear-both flex flex-wrap items-center gap-2.5 pt-1">
                 {released && (
                   <Link
                     href={`/watch/${item.slug}`}
@@ -187,7 +196,7 @@ export function ContentPreviewModal({
                       onClick={() => setShowTrailer(false)}
                       className="btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
                     >
-                      Show thumbnail
+                      Show poster
                     </button>
                   ) : (
                     <button
@@ -223,6 +232,7 @@ export function ContentPreviewModal({
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
