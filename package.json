@@ -11,6 +11,7 @@
     "db:open": "open supabase/schema.sql",
     "db:copy": "pbcopy < supabase/schema.sql && echo 'Schema copied to clipboard.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "db:admin": "pbcopy < supabase/promote-admin.sql && echo 'Admin SQL copied.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
+    "db:coming-soon": "pbcopy < supabase/migrate-coming-soon.sql && echo 'Coming Soon migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "db:storage": "pbcopy < supabase/storage.sql && echo 'Storage SQL copied.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
   },
   "dependencies": {
