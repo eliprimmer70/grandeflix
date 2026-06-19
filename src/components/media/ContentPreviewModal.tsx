@@ -65,10 +65,14 @@ export function ContentPreviewModal({
   }, [onClose]);
 
   useEffect(() => {
-    const prev = document.body.style.overflow;
+    const html = document.documentElement;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = html.style.overflow;
     document.body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = prev;
+      document.body.style.overflow = prevBody;
+      html.style.overflow = prevHtml;
     };
   }, []);
 
@@ -88,7 +92,7 @@ export function ContentPreviewModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-[100] flex items-end justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:p-6"
+        className="fixed inset-0 z-[100] flex items-end justify-center bg-black/90 sm:items-center sm:p-6"
         onClick={handleClose}
         role="presentation"
       >
@@ -98,7 +102,7 @@ export function ContentPreviewModal({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 32 }}
           transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="relative flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface-raised shadow-2xl ring-1 ring-white/[0.08] sm:max-h-[min(90vh,720px)] sm:max-w-2xl sm:rounded-2xl lg:max-w-3xl"
+          className="relative flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-surface-raised shadow-2xl ring-1 ring-white/[0.08] sm:max-h-[min(90vh,640px)] sm:max-w-lg sm:rounded-2xl"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
@@ -107,60 +111,68 @@ export function ContentPreviewModal({
           <button
             type="button"
             onClick={handleClose}
-            className="absolute right-3 top-3 z-30 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white/80 ring-1 ring-white/10 transition hover:bg-black/80 hover:text-white sm:right-4 sm:top-4"
+            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white/80 ring-1 ring-white/10 transition hover:bg-black/80 hover:text-white"
             aria-label="Close preview"
           >
             <CloseIcon />
           </button>
 
-          <div className="relative aspect-video w-full shrink-0 overflow-hidden bg-black">
-            {trailerSource ? (
-              <VideoPlayer source={trailerSource} title={`${item.title} trailer`} />
-            ) : (
-              <>
-                <ContentThumbnail
-                  src={getPosterUrl(item)}
-                  title={item.title}
-                  priority
-                  sizes="(max-width: 640px) 100vw, 768px"
-                  className="object-cover brightness-[0.85]"
-                />
-                <div className="hero-top-fade absolute inset-0" />
-                <div className="hero-billboard-fade absolute inset-0" />
-              </>
-            )}
-          </div>
-
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto safe-bottom">
-            <div className="page-x space-y-3 py-5 sm:py-6">
-              {item.category && (
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
-                  {categoryLabel(item.category)}
-                </p>
+            <div className="page-x space-y-4 py-5 pr-12 sm:py-6">
+              {trailerSource && (
+                <div className="aspect-video max-h-48 w-full overflow-hidden rounded-lg bg-black ring-1 ring-white/10">
+                  <VideoPlayer source={trailerSource} title={`${item.title} trailer`} />
+                </div>
               )}
 
-              <div className="flex flex-wrap items-center gap-2">
-                {badge && <ReleaseBadge badge={badge} />}
-                {item.releaseDate && (
-                  <span className="text-xs text-white/45">
-                    {new Date(item.releaseDate).toLocaleDateString("en-US", { dateStyle: "long" })}
-                  </span>
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+                {!trailerSource && (
+                  <div className="w-28 shrink-0 sm:w-32">
+                    <div className="aspect-video max-h-48 w-full overflow-hidden rounded-lg bg-black ring-1 ring-white/10">
+                      <ContentThumbnail
+                        src={getPosterUrl(item)}
+                        title={item.title}
+                        priority
+                        sizes="112px"
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
                 )}
+
+                <div className="min-w-0 flex-1 space-y-2 pt-0.5 text-center sm:text-left">
+                  {item.category && (
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+                      {categoryLabel(item.category)}
+                    </p>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                    {badge && <ReleaseBadge badge={badge} />}
+                    {item.releaseDate ? (
+                      <span className="text-xs text-white/45">
+                        {new Date(item.releaseDate).toLocaleDateString("en-US", { dateStyle: "long" })}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-white/45">TBA</span>
+                    )}
+                  </div>
+
+                  <h2 id="preview-title" className="font-display text-lg font-bold leading-tight text-white sm:text-xl">
+                    {item.title}
+                  </h2>
+                </div>
               </div>
 
-              <h2 id="preview-title" className="font-display text-xl font-bold leading-tight text-white sm:text-2xl">
-                {item.title}
-              </h2>
-
               {item.description && (
-                <p className="text-sm leading-relaxed text-white/65 sm:text-[15px]">{item.description}</p>
+                <p className="text-sm leading-relaxed text-white/65">{item.description}</p>
               )}
 
-              <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <div className="flex flex-wrap items-center justify-center gap-2.5 sm:justify-start">
                 {released && (
                   <Link
                     href={`/watch/${item.slug}`}
-                    className="btn-watch inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm sm:px-5"
+                    className="btn-watch inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
                     onClick={handleClose}
                   >
                     <PlayIcon />
@@ -173,7 +185,7 @@ export function ContentPreviewModal({
                     <button
                       type="button"
                       onClick={() => setShowTrailer(false)}
-                      className="btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm sm:px-5"
+                      className="btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
                     >
                       Show thumbnail
                     </button>
@@ -181,7 +193,7 @@ export function ContentPreviewModal({
                     <button
                       type="button"
                       onClick={() => setShowTrailer(true)}
-                      className="btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm sm:px-5"
+                      className="btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
                     >
                       <PlayIcon />
                       {released ? "Preview" : "Watch trailer"}
@@ -200,7 +212,7 @@ export function ContentPreviewModal({
 
                 <Link
                   href={`/watch/${item.slug}`}
-                  className="btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm sm:px-5"
+                  className="btn-secondary inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 py-2.5 text-sm"
                   onClick={handleClose}
                 >
                   <InfoIcon />
