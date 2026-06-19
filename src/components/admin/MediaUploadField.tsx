@@ -7,6 +7,7 @@ import {
 } from "@/app/admin/upload-actions";
 import {
   formatStorageError,
+  getMediaUploadFixLinks,
   validateMediaFile,
   type MediaKind,
   type MediaUploadLimit,
@@ -128,8 +129,10 @@ export function MediaUploadField({
 
   const maxLabel = uploadLimit?.label ?? "…";
   const limitHint = uploadLimit?.limitedByPlan
-    ? `Max ${maxLabel} on Free tier — Pro or YouTube/Vimeo for larger files`
+    ? `Max ${maxLabel} on Free tier — Pro + Storage settings for larger files, or YouTube/Vimeo URL`
     : `Max ${maxLabel}`;
+  const fixLinks = uploadLimit ? getMediaUploadFixLinks(uploadLimit) : [];
+  const showFixLinks = Boolean(error && fixLinks.length > 0);
 
   return (
     <div>
@@ -161,6 +164,27 @@ export function MediaUploadField({
       </div>
       {message && !error && <p className="mt-1.5 text-xs text-emerald-400/80">{message}</p>}
       {error && <p className="mt-1.5 text-xs text-red-300">{error}</p>}
+      {showFixLinks && (
+        <p className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+          {fixLinks.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-bright hover:underline"
+            >
+              {link.label} →
+            </a>
+          ))}
+        </p>
+      )}
+      {uploadLimit?.limitedByPlan && !error && (kind === "video" || kind === "trailer") && (
+        <p className="mt-1.5 text-xs text-amber-200/70">
+          Direct uploads are capped at {uploadLimit.label} on Supabase Free. For full-length films,
+          paste a YouTube or Vimeo link above instead.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,7 +1,13 @@
+import { supabaseSetup } from "@/data/setup";
+
 export const MEDIA_BUCKET = "media";
 
 export const STORAGE_SETUP_MESSAGE =
   'Storage bucket "media" not found. Run npm run db:storage, then paste the SQL in the Supabase SQL Editor and click Run.';
+
+export const STORAGE_SETUP_URL = supabaseSetup.sqlEditorUrl;
+export const STORAGE_SETTINGS_URL = supabaseSetup.storageSettingsUrl;
+export const SUPABASE_PRICING_URL = "https://supabase.com/pricing";
 
 /** Supabase Free tier global upload cap (also default bucket limit on Free). */
 export const SUPABASE_FREE_TIER_MAX_BYTES = 50 * 1024 * 1024; // 52428800
@@ -44,6 +50,34 @@ export function formatBytes(bytes: number): string {
   return `${bytes} B`;
 }
 
+/** Human label plus exact byte count for admin error messages. */
+export function formatBytesDetailed(bytes: number): string {
+  return `${formatBytes(bytes)} (${bytes.toLocaleString("en-US")} bytes)`;
+}
+
+export type MediaUploadFixLink = { href: string; label: string };
+
+export function getMediaUploadFixLinks(limit: MediaUploadLimit): MediaUploadFixLink[] {
+  if (limit.limitedByPlan) {
+    return [
+      { href: SUPABASE_PRICING_URL, label: "Upgrade to Supabase Pro" },
+      {
+        href: STORAGE_SETTINGS_URL,
+        label: "Raise global file size limit (after Pro)",
+      },
+    ];
+  }
+
+  if (limit.bucketMaxBytes != null && limit.bucketMaxBytes < limit.appMaxBytes) {
+    return [
+      { href: STORAGE_SETTINGS_URL, label: "Storage settings" },
+      { href: STORAGE_SETUP_URL, label: "Run storage SQL (db:storage-1gb)" },
+    ];
+  }
+
+  return [];
+}
+
 export function isLikelyFreeTierCap(bucketFileSizeLimit: number | null | undefined): boolean {
   return bucketFileSizeLimit != null && bucketFileSizeLimit <= SUPABASE_FREE_TIER_MAX_BYTES;
 }
@@ -70,11 +104,12 @@ export function buildMediaUploadLimit(
 
   return {
     maxBytes,
-    label: formatBytes(maxBytes),
+    label: formatBytesDetailed(maxBytes),
     appMaxBytes: app.maxBytes,
     appLabel: app.label,
     bucketMaxBytes: bucketFileSizeLimit ?? null,
-    bucketLabel: bucketFileSizeLimit != null ? formatBytes(bucketFileSizeLimit) : null,
+    bucketLabel:
+      bucketFileSizeLimit != null ? formatBytesDetailed(bucketFileSizeLimit) : null,
     limitedByPlan,
   };
 }
@@ -91,11 +126,13 @@ export function formatUploadSizeError(
   }
 
   if (limit.limitedByPlan) {
-    return `File too large for current Supabase plan (max ${limit.label}). Upgrade to Pro or use a YouTube/Vimeo URL.`;
+    return `File too large for current Supabase plan (max ${limit.label}). Free tier caps uploads at ${formatBytesDetailed(
+      SUPABASE_FREE_TIER_MAX_BYTES
+    )} globally — upgrade to Pro, raise Storage → Settings → global limit, then re-run npm run db:storage-1gb:apply. For large videos now, paste a YouTube/Vimeo URL.`;
   }
 
   if (limit.bucketMaxBytes != null && limit.bucketMaxBytes < limit.appMaxBytes) {
-    return `File too large for the storage bucket (max ${limit.label}). Run npm run db:storage-1gb in Supabase SQL Editor, or paste a YouTube/Vimeo URL instead.`;
+    return `File too large for the storage bucket (max ${limit.label}). Run npm run db:storage-1gb in Supabase SQL Editor or npm run db:storage-1gb:apply, or paste a YouTube/Vimeo URL instead.`;
   }
 
   return `File too large. Max size is ${limit.label}.`;
@@ -103,10 +140,12 @@ export function formatUploadSizeError(
 
 function formatStorageSizeFailure(limit: MediaUploadLimit): string {
   if (limit.limitedByPlan) {
-    return `Upload rejected by Supabase (max ${limit.label} on Free tier). Upgrade to Pro or use a YouTube/Vimeo URL.`;
+    return `Upload rejected by Supabase Storage — max ${limit.label} on Free tier (global cap ${formatBytesDetailed(
+      SUPABASE_FREE_TIER_MAX_BYTES
+    )}). Upgrade to Pro, raise the global limit in Storage settings, then npm run db:storage-1gb:apply. Or use a YouTube/Vimeo URL.`;
   }
   if (limit.bucketMaxBytes != null && limit.bucketMaxBytes < limit.appMaxBytes) {
-    return `Upload rejected by Supabase Storage (bucket max ${limit.label}). Run npm run db:storage-1gb or use a YouTube/Vimeo URL.`;
+    return `Upload rejected by Supabase Storage (bucket max ${limit.label}). Run npm run db:storage-1gb or npm run db:storage-1gb:apply, or use a YouTube/Vimeo URL.`;
   }
   return `Upload rejected — file exceeds the ${limit.label} limit.`;
 }
@@ -138,9 +177,9 @@ export function formatStorageError(
         buildMediaUploadLimit(context.kind, context.bucketFileSizeLimit)
       );
     }
-    return `File too large for Supabase Storage (Free tier max ${formatBytes(
+    return `File too large for Supabase Storage (Free tier max ${formatBytesDetailed(
       SUPABASE_FREE_TIER_MAX_BYTES
-    )}). Upgrade to Pro or use a YouTube/Vimeo URL.`;
+    )}). Upgrade to Pro, raise Storage → Settings → global limit, then npm run db:storage-1gb:apply. Or use a YouTube/Vimeo URL.`;
   }
 
   return message;
