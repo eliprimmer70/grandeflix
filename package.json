@@ -22,6 +22,8 @@
     "db:content-columns": "pbcopy < supabase/migrate-content-columns.sql && echo 'Content columns migration copied (poster_url + release_date_tba).' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "r2:open": "open -a 'Brave Browser' 'https://dash.cloudflare.com/?to=/:account/r2/overview'",
     "r2:tokens": "open -a 'Brave Browser' 'https://dash.cloudflare.com/?to=/:account/r2/api-tokens'",
+    "r2:login": "npx wrangler login",
+    "r2:setup": "node scripts/setup-r2.mjs",
     "r2:cors": "npx wrangler r2 bucket cors put grandeflix --file scripts/r2-cors.json"
   },
   "dependencies": {
