@@ -67,7 +67,13 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
     <PageFade>
       <div className="min-h-screen bg-background pb-16 safe-bottom pt-[calc(3.5rem+env(safe-area-inset-top,0px))] sm:pt-[calc(4.25rem+env(safe-area-inset-top,0px))]">
         {videoSource ? (
-          <VideoPlayer source={videoSource} title={item.title} />
+          <VideoPlayer
+            source={videoSource}
+            title={item.title}
+            posterUrl={posterUrl}
+            autoPlay={videoSource.type === "embed"}
+            clickToPlay={videoSource.type === "direct"}
+          />
         ) : (
           <div className="relative flex aspect-video items-center justify-center bg-surface">
             {posterUrl && (
