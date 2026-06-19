@@ -13,6 +13,7 @@ type Initial = {
   video_url?: string;
   trailer_url?: string;
   release_date?: string;
+  coming_soon?: boolean;
   category?: string;
   featured?: boolean;
 };
@@ -68,6 +69,10 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
         <p className="text-xs text-white/30">
           Future dates show as COMING [DATE]. Leave empty if already released.
         </p>
+        <label className="flex items-center gap-2 text-sm text-white/65">
+          <input type="checkbox" name="coming_soon" defaultChecked={initial?.coming_soon} />
+          Mark as Coming Soon (shows badge + preview row even if video URL is set)
+        </label>
         <label className="flex items-center gap-2 text-sm text-white/65">
           <input type="checkbox" name="featured" defaultChecked={initial?.featured} />
           Featured on homepage hero

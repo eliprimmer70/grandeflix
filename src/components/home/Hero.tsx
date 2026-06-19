@@ -36,8 +36,8 @@ export function Hero({ featured }: { featured: ContentItem | null }) {
     );
   }
 
-  const badge = getReleaseBadge(featured.releaseDate, featured.videoUrl);
-  const released = canPlay(featured.releaseDate, featured.videoUrl);
+  const badge = getReleaseBadge(featured.releaseDate, featured.videoUrl, featured.comingSoon);
+  const released = canPlay(featured.releaseDate, featured.videoUrl, featured.comingSoon);
   const hasTrailer = Boolean(featured.trailerUrl);
 
   return (

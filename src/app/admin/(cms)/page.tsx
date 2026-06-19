@@ -34,7 +34,7 @@ export default async function AdminPage() {
             </p>
           )}
           {items.map((item) => {
-            const badge = getReleaseBadge(item.release_date, item.video_url ?? undefined);
+            const badge = getReleaseBadge(item.release_date, item.video_url ?? undefined, item.coming_soon);
             const cat = CATEGORIES.find((c) => c.value === item.category)?.label ?? item.category;
             return (
               <article key={item.id} className="rounded-xl border border-white/[0.08] bg-surface/40 p-4">
@@ -76,7 +76,7 @@ export default async function AdminPage() {
                 </tr>
               )}
               {items.map((item) => {
-                const badge = getReleaseBadge(item.release_date, item.video_url ?? undefined);
+                const badge = getReleaseBadge(item.release_date, item.video_url ?? undefined, item.coming_soon);
                 const cat = CATEGORIES.find((c) => c.value === item.category)?.label ?? item.category;
                 return (
                   <tr key={item.id} className="border-b border-white/[0.05]">

@@ -23,6 +23,7 @@ export interface DbContent {
   video_url: string | null;
   trailer_url: string | null;
   release_date: string | null;
+  coming_soon: boolean;
   category: string;
   featured: boolean;
   created_at: string;
@@ -37,6 +38,7 @@ export interface ContentItem {
   videoUrl?: string;
   trailerUrl?: string;
   releaseDate: string | null;
+  comingSoon: boolean;
   category: string;
   featured: boolean;
   createdAt: string;

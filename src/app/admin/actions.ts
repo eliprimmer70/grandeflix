@@ -37,6 +37,7 @@ export async function saveContent(
     video_url: String(formData.get("video_url") ?? "").trim() || null,
     trailer_url: String(formData.get("trailer_url") ?? "").trim() || null,
     release_date: parseDate(formData.get("release_date")),
+    coming_soon: formData.get("coming_soon") === "on",
     category: String(formData.get("category") ?? "fan-movies"),
     featured: formData.get("featured") === "on",
   };

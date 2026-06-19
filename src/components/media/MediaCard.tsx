@@ -9,7 +9,7 @@ import { getReleaseBadge } from "@/lib/utils";
 import { useCanHover } from "@/lib/hooks/useCanHover";
 
 export function MediaCard({ item, priority = false }: { item: ContentItem; priority?: boolean }) {
-  const badge = getReleaseBadge(item.releaseDate, item.videoUrl);
+  const badge = getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon);
   const canHover = useCanHover();
 
   return (

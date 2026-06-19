@@ -10,6 +10,7 @@ export function mapContent(row: import("./types").DbContent): import("./types").
     videoUrl: row.video_url ?? undefined,
     trailerUrl: row.trailer_url ?? undefined,
     releaseDate: row.release_date,
+    comingSoon: row.coming_soon ?? false,
     category: row.category,
     featured: row.featured,
     createdAt: row.created_at,
@@ -53,16 +54,35 @@ export function getEmbedUrl(url: string, autoplay = false): string | null {
   return `https://www.youtube.com/embed/${parsed.videoId}?autoplay=${play}&rel=0&modestbranding=1`;
 }
 
-export function canPlay(releaseDate: string | null, videoUrl?: string): boolean {
+export function isComingSoon(
+  releaseDate: string | null,
+  videoUrl?: string,
+  comingSoon = false,
+): boolean {
+  if (comingSoon) return true;
+  if (releaseDate && new Date(releaseDate) > new Date()) return true;
+  if (!videoUrl) return true;
+  return false;
+}
+
+export function canPlay(
+  releaseDate: string | null,
+  videoUrl?: string,
+  comingSoon = false,
+): boolean {
+  if (comingSoon) return false;
   if (!videoUrl) return false;
-  if (!releaseDate) return true;
-  return new Date(releaseDate) <= new Date();
+  if (releaseDate && new Date(releaseDate) > new Date()) return false;
+  return true;
 }
 
 export function getReleaseBadge(
   releaseDate: string | null,
   videoUrl?: string,
+  comingSoon = false,
 ): ReleaseBadge | null {
+  if (!isComingSoon(releaseDate, videoUrl, comingSoon)) return null;
+
   if (releaseDate) {
     const release = new Date(releaseDate);
     if (release > new Date()) {
@@ -71,12 +91,9 @@ export function getReleaseBadge(
         .toUpperCase();
       return { label: `COMING ${formatted}`, variant: "dated" };
     }
-    return null;
   }
-  if (!videoUrl) {
-    return { label: "COMING SOON", variant: "soon" };
-  }
-  return null;
+
+  return { label: "COMING SOON", variant: "soon" };
 }
 
 export function isReleased(releaseDate: string | null): boolean {

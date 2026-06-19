@@ -29,6 +29,7 @@ export default async function EditContentPage({ params }: EditPageProps) {
             video_url: item.video_url ?? "",
             trailer_url: item.trailer_url ?? "",
             release_date: item.release_date ?? undefined,
+            coming_soon: item.coming_soon,
             category: item.category,
             featured: item.featured,
           }}

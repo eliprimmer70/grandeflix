@@ -1,7 +1,7 @@
 import { bootstrapAdminIfConfigured, ensureUserProfile } from "@/lib/profiles";
 import { createClient } from "@/lib/supabase/server";
 import type { DbContent } from "@/lib/types";
-import { mapContent, sanitizeSearchQuery } from "@/lib/utils";
+import { mapContent, sanitizeSearchQuery, isComingSoon } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/types";
 
 export async function getSessionUser() {
@@ -168,6 +168,43 @@ export async function getAllContentAdmin() {
     .order("created_at", { ascending: false });
 
   return (data as DbContent[] | null) ?? [];
+}
+
+export async function getComingSoonContent() {
+  const all = await fetchAllContent();
+  return all
+    .map(mapContent)
+    .filter((item) => isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon))
+    .sort((a, b) => {
+      if (a.releaseDate && b.releaseDate) {
+        return new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime();
+      }
+      if (a.releaseDate) return -1;
+      if (b.releaseDate) return 1;
+      return a.title.localeCompare(b.title);
+    });
+}
+
+export async function getUserReminderContentIds(userId: string): Promise<Set<string>> {
+  const supabase = await createClient();
+  if (!supabase) return new Set();
+  const { data } = await supabase
+    .from("content_reminders")
+    .select("content_id")
+    .eq("user_id", userId);
+  return new Set((data ?? []).map((r) => r.content_id as string));
+}
+
+export async function hasContentReminder(userId: string, contentId: string): Promise<boolean> {
+  const supabase = await createClient();
+  if (!supabase) return false;
+  const { data } = await supabase
+    .from("content_reminders")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("content_id", contentId)
+    .maybeSingle();
+  return Boolean(data);
 }
 
 export async function getContentByIdAdmin(id: string) {

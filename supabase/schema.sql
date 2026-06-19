@@ -16,10 +16,23 @@ create table if not exists public.content (
   video_url text,
   trailer_url text,
   release_date timestamptz,
+  coming_soon boolean not null default false,
   category text not null,
   featured boolean not null default false,
   created_at timestamptz not null default now()
 );
+
+create table if not exists public.content_reminders (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users on delete cascade,
+  content_id uuid not null references public.content on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (user_id, content_id)
+);
+
+create index if not exists content_coming_soon_idx on public.content (coming_soon) where coming_soon = true;
+create index if not exists content_reminders_user_idx on public.content_reminders (user_id);
+create index if not exists content_reminders_content_idx on public.content_reminders (content_id);
 
 create index if not exists content_category_idx on public.content (category);
 create index if not exists content_featured_idx on public.content (featured) where featured = true;
@@ -89,6 +102,23 @@ create policy "content_delete_admin"
       where id = auth.uid() and role = 'admin'
     )
   );
+
+alter table public.content_reminders enable row level security;
+
+drop policy if exists "reminders_select_own" on public.content_reminders;
+create policy "reminders_select_own"
+  on public.content_reminders for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "reminders_insert_own" on public.content_reminders;
+create policy "reminders_insert_own"
+  on public.content_reminders for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "reminders_delete_own" on public.content_reminders;
+create policy "reminders_delete_own"
+  on public.content_reminders for delete
+  using (auth.uid() = user_id);
 
 -- After first sign-up, promote admin (see supabase/promote-admin.sql):
 -- insert into public.profiles (id, email, role)

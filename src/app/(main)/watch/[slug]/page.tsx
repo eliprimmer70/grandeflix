@@ -6,8 +6,9 @@ import { PageFade } from "@/components/motion/PageFade";
 import { VideoPlayer } from "@/components/media/VideoPlayer";
 import { ContentRow } from "@/components/media/ContentRow";
 import { ReleaseBadge } from "@/components/ui/ReleaseBadge";
-import { getContentBySlug, getRelatedContent } from "@/lib/content";
-import { getEmbedUrl, getReleaseBadge, canPlay } from "@/lib/utils";
+import { RemindMeButton } from "@/components/media/RemindMeButton";
+import { getContentBySlug, getRelatedContent, getSessionUser, hasContentReminder } from "@/lib/content";
+import { getEmbedUrl, getReleaseBadge, canPlay, isComingSoon } from "@/lib/utils";
 import type { ContentRow as RowType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -30,9 +31,13 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
   const item = await getContentBySlug(slug);
   if (!item) notFound();
 
-  const badge = getReleaseBadge(item.releaseDate, item.videoUrl);
-  const released = canPlay(item.releaseDate, item.videoUrl);
-  const wantTrailer = trailerParam === "1" || (!released && item.trailerUrl);
+  const user = await getSessionUser();
+  const reminded = user ? await hasContentReminder(user.id, item.id) : false;
+
+  const badge = getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon);
+  const released = canPlay(item.releaseDate, item.videoUrl, item.comingSoon);
+  const preview = isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon);
+  const wantTrailer = trailerParam === "1" || (preview && item.trailerUrl);
   const embedUrl =
     wantTrailer && item.trailerUrl
       ? getEmbedUrl(item.trailerUrl, true)
@@ -82,7 +87,7 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
           {item.description && (
             <p className="mt-5 text-[15px] leading-relaxed text-white/65">{item.description}</p>
           )}
-          <div className="mt-6 flex flex-wrap gap-2.5">
+          <div className="mt-6 flex flex-wrap items-center gap-2.5">
             {released && item.videoUrl && (
               <Link href={`/watch/${item.slug}`} className="btn-watch min-h-[44px] rounded-lg px-5 py-2.5 text-sm">
                 Watch now
@@ -90,8 +95,16 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
             )}
             {item.trailerUrl && (
               <Link href={`/watch/${item.slug}?trailer=1`} className="btn-secondary min-h-[44px] rounded-lg px-5 py-2.5 text-sm">
-                Preview
+                {preview ? "Watch trailer" : "Preview"}
               </Link>
+            )}
+            {preview && (
+              <RemindMeButton
+                contentId={item.id}
+                slug={item.slug}
+                initialReminded={reminded}
+                signedIn={Boolean(user)}
+              />
             )}
           </div>
         </div>
