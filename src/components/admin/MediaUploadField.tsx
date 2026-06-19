@@ -181,8 +181,17 @@ export function MediaUploadField({
       )}
       {uploadLimit?.limitedByPlan && !error && (kind === "video" || kind === "trailer") && (
         <p className="mt-1.5 text-xs text-amber-200/70">
-          Direct uploads are capped at {uploadLimit.label} on Supabase Free. For full-length films,
-          paste a YouTube or Vimeo link above instead.
+          Direct Supabase uploads are capped at {uploadLimit.label} on Free. For full-length films,
+          paste a YouTube/Vimeo link or a{" "}
+          <a
+            href="https://developers.cloudflare.com/r2/buckets/public-buckets/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-bright hover:underline"
+          >
+            Cloudflare R2
+          </a>{" "}
+          public MP4 URL above.
         </p>
       )}
     </div>

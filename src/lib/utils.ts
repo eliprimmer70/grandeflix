@@ -95,6 +95,7 @@ export function isDirectVideoUrl(url: string): boolean {
   try {
     const parsed = new URL(url.trim());
     if (/\.(mp4|webm|mov)(\?|$)/i.test(parsed.pathname)) return true;
+    if (parsed.hostname.endsWith(".r2.dev")) return true;
     if (
       parsed.hostname.includes("supabase.co") &&
       /\/storage\/v1\/object\/public\/media\/(videos|trailers)\//.test(parsed.pathname)

@@ -56,7 +56,19 @@ If the bucket already exists with a lower limit, run **`supabase/migrate-storage
 
 To apply the bucket limit via API (requires Pro + raised global limit): `npm run db:storage-1gb:apply`. Check current limits: `npm run db:storage:check`.
 
-**Enforced limit:** Supabase applies the **lower** of (1) global Storage Settings limit, (2) bucket `file_size_limit`, and (3) app validation. On the **Free tier**, the global cap is **50 MB** — raising the bucket to 1 GB in SQL or via API will fail until you upgrade to **Pro** and increase **Storage → Settings → Global file size limit**. For large videos on Free, paste a **YouTube/Vimeo URL** instead of uploading.
+**Enforced limit:** Supabase applies the **lower** of (1) global Storage Settings limit, (2) bucket `file_size_limit`, and (3) app validation. On the **Free tier**, the global cap is **50 MB** — raising the bucket to 1 GB in SQL or via API will fail until you upgrade to **Pro** and increase **Storage → Settings → Global file size limit**. For large videos on Free, paste a **YouTube/Vimeo URL** or host the MP4 on **Cloudflare R2** (see below).
+
+### Cloudflare R2 for large videos
+
+Supabase Storage is fine for posters and short clips, but multi-GB fan films exceed the Free-tier upload cap. **Cloudflare R2** offers **10 GB free storage** with **no egress fees** — ideal for direct MP4 links played by the built-in HTML5 player.
+
+1. **Create a bucket** in the [Cloudflare dashboard](https://dash.cloudflare.com/) → **R2** → **Create bucket**.
+2. **Enable public access** — either turn on the **r2.dev subdomain** for the bucket, or connect a **custom domain** under **Settings → Public access**. See [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/).
+3. **Upload your video** — drag the `.mp4` into the bucket (Cloudflare dashboard, [Wrangler CLI](https://developers.cloudflare.com/r2/objects/upload-objects/), or any S3-compatible tool).
+4. **Copy the public URL** — e.g. `https://pub-xxxx.r2.dev/my-bucket/fan-movie.mp4` or your custom domain path.
+5. **Paste in admin** — in **Video URL** (or **Trailer URL**) on `/admin`, paste the R2 URL and save. No extra env vars required for playback.
+
+The player treats `*.r2.dev` URLs and any direct `.mp4` / `.webm` / `.mov` link as native HTML5 video.
 
 ---
 

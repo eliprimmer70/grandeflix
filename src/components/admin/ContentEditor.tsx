@@ -119,8 +119,18 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
       <section className="space-y-4 rounded border border-white/[0.08] p-5">
         <h2 className="text-sm font-medium text-white/75">Media</h2>
         <p className="text-xs text-white/35">
-          Paste a YouTube/Vimeo URL or upload MP4/WebM/MOV from your device (max 1 GB). Uploads
-          require <code className="text-white/50">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
+          Paste a YouTube/Vimeo URL, a{" "}
+          <a
+            href="https://developers.cloudflare.com/r2/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-bright hover:underline"
+          >
+            Cloudflare R2
+          </a>{" "}
+          public MP4 link (<code className="text-white/50">*.r2.dev</code> or custom domain), or upload
+          MP4/WebM/MOV from your device (max 1 GB). Uploads require{" "}
+          <code className="text-white/50">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
         </p>
         <MediaUploadField
           label="Card image"
@@ -145,19 +155,31 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
           Wide billboard for the featured hero. Falls back to the card image if empty.
         </p>
         <MediaUploadField
-          label="Video URL (YouTube / Vimeo / file)"
+          label="Video URL (YouTube / Vimeo / R2 / file)"
           name="video_url"
           kind="video"
           defaultValue={initial?.video_url}
-          placeholder="https://youtube.com/… or upload MP4"
+          placeholder="https://youtube.com/…, https://….r2.dev/…/video.mp4, or upload MP4"
           slugHint={slugHint}
         />
+        <p className="-mt-2 text-xs text-white/30">
+          For multi-GB films, upload to{" "}
+          <a
+            href="https://developers.cloudflare.com/r2/buckets/public-buckets/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-bright hover:underline"
+          >
+            Cloudflare R2
+          </a>{" "}
+          (10 GB free, no egress fees) and paste the public URL here.
+        </p>
         <MediaUploadField
-          label="Trailer URL (YouTube / Vimeo / file)"
+          label="Trailer URL (YouTube / Vimeo / R2 / file)"
           name="trailer_url"
           kind="trailer"
           defaultValue={initial?.trailer_url}
-          placeholder="https://vimeo.com/… or upload MP4"
+          placeholder="https://vimeo.com/…, https://….r2.dev/…/trailer.mp4, or upload MP4"
           slugHint={slugHint}
         />
       </section>
