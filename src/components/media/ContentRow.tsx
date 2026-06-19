@@ -1,21 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ContentRow as RowType } from "@/lib/types";
+import type { ContentItem, ContentRow as RowType } from "@/lib/types";
 import { MediaCard } from "./MediaCard";
+import { ContentPreviewModal } from "./ContentPreviewModal";
 import { cn } from "@/lib/utils";
 import { useCanHover } from "@/lib/hooks/useCanHover";
 
 export function ContentRow({
   row,
   hideCardBadges = false,
+  signedIn = true,
 }: {
   row: RowType;
   hideCardBadges?: boolean;
+  signedIn?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [canScroll, setCanScroll] = useState(false);
+  const [previewItem, setPreviewItem] = useState<ContentItem | null>(null);
   const canHover = useCanHover();
 
   useEffect(() => {
@@ -49,37 +53,48 @@ export function ContentRow({
   const showArrows = canScroll && (canHover ? hovered : true);
 
   return (
-    <section
-      id={row.id}
-      className="relative mb-8 sm:mb-10"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div className="page-x mb-3 flex items-center gap-3">
-        <span className="section-accent shrink-0" />
-        <h2 className="font-display text-base font-semibold text-white sm:text-lg md:text-xl">{row.title}</h2>
-      </div>
-      <div className="relative">
-        <RowArrow dir="left" visible={showArrows} onClick={() => scroll("left")} />
-        <RowArrow dir="right" visible={showArrows} onClick={() => scroll("right")} />
-        <div
-          ref={scrollRef}
-          className={cn(
-            "row-mask touch-scroll flex snap-x snap-mandatory gap-2.5 overflow-x-auto py-2 sm:gap-3",
-            "page-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-          )}
-        >
-          {row.items.map((item, i) => (
-            <MediaCard
-              key={item.id}
-              item={item}
-              priority={i < 3}
-              showBadge={!hideCardBadges}
-            />
-          ))}
+    <>
+      <section
+        id={row.id}
+        className="relative mb-8 sm:mb-10"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <div className="page-x mb-3 flex items-center gap-3">
+          <span className="section-accent shrink-0" />
+          <h2 className="font-display text-base font-semibold text-white sm:text-lg md:text-xl">{row.title}</h2>
         </div>
-      </div>
-    </section>
+        <div className="relative">
+          <RowArrow dir="left" visible={showArrows} onClick={() => scroll("left")} />
+          <RowArrow dir="right" visible={showArrows} onClick={() => scroll("right")} />
+          <div
+            ref={scrollRef}
+            className={cn(
+              "row-mask touch-scroll flex snap-x snap-mandatory gap-2.5 overflow-x-auto py-2 sm:gap-3",
+              "page-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            )}
+          >
+            {row.items.map((item, i) => (
+              <MediaCard
+                key={item.id}
+                item={item}
+                priority={i < 3}
+                showBadge={!hideCardBadges}
+                onPreview={setPreviewItem}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {previewItem && (
+        <ContentPreviewModal
+          item={previewItem}
+          onClose={() => setPreviewItem(null)}
+          signedIn={signedIn}
+        />
+      )}
+    </>
   );
 }
 

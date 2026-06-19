@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "framer-motion";
 import type { ContentItem } from "@/lib/types";
 import { ReleaseBadge } from "@/components/ui/ReleaseBadge";
@@ -12,10 +11,12 @@ export function MediaCard({
   item,
   priority = false,
   showBadge = true,
+  onPreview,
 }: {
   item: ContentItem;
   priority?: boolean;
   showBadge?: boolean;
+  onPreview?: (item: ContentItem) => void;
 }) {
   const badge = showBadge ? getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon) : null;
   const canHover = useCanHover();
@@ -27,9 +28,11 @@ export function MediaCard({
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="relative shrink-0 snap-start origin-center"
     >
-      <Link
-        href={`/watch/${item.slug}${badge ? "?trailer=1" : ""}`}
-        className="group block w-[40vw] min-w-[132px] max-w-[168px] sm:w-[180px] sm:max-w-[200px] md:w-[228px] md:max-w-none lg:w-[260px]"
+      <button
+        type="button"
+        onClick={() => onPreview?.(item)}
+        className="group block w-[40vw] min-w-[132px] max-w-[168px] text-left sm:w-[180px] sm:max-w-[200px] md:w-[228px] md:max-w-none lg:w-[260px]"
+        aria-label={`Preview ${item.title}`}
       >
         <article className="card-glow overflow-hidden rounded-xl bg-surface-raised ring-1 ring-white/[0.06] transition-shadow">
           <div className="relative aspect-video overflow-hidden">
@@ -56,7 +59,7 @@ export function MediaCard({
             )}
           </div>
         </article>
-      </Link>
+      </button>
     </motion.div>
   );
 }
