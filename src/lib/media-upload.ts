@@ -1,5 +1,22 @@
 export const MEDIA_BUCKET = "media";
 
+export const STORAGE_SETUP_MESSAGE =
+  'Storage bucket "media" not found. Run supabase/storage.sql in the Supabase SQL Editor (or `npm run db:storage` to copy it), then try again.';
+
+/** Map cryptic Supabase Storage errors to the storage.sql setup hint. */
+export function formatStorageError(message?: string | null): string {
+  if (!message) return STORAGE_SETUP_MESSAGE;
+  const lower = message.toLowerCase();
+  if (
+    lower.includes("related resource does not exist") ||
+    lower.includes("bucket not found") ||
+    (lower.includes("not found") && lower.includes("bucket"))
+  ) {
+    return STORAGE_SETUP_MESSAGE;
+  }
+  return message;
+}
+
 export type MediaKind = "video" | "thumbnail" | "trailer";
 
 const VIDEO_MIMES = new Set(["video/mp4", "video/webm", "video/quicktime"]);

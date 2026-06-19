@@ -2,7 +2,12 @@
 
 import { useRef, useState } from "react";
 import { prepareMediaUpload } from "@/app/admin/upload-actions";
-import { MEDIA_LIMITS, validateMediaFile, type MediaKind } from "@/lib/media-upload";
+import {
+  formatStorageError,
+  MEDIA_LIMITS,
+  validateMediaFile,
+  type MediaKind,
+} from "@/lib/media-upload";
 import { createClient } from "@/lib/supabase/client";
 
 type Props = {
@@ -75,7 +80,7 @@ export function MediaUploadField({
         });
 
       if (uploadError) {
-        setError(uploadError.message);
+        setError(formatStorageError(uploadError.message));
         setMessage(null);
         return;
       }
