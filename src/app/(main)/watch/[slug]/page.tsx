@@ -8,7 +8,7 @@ import { ContentRow } from "@/components/media/ContentRow";
 import { ReleaseBadge } from "@/components/ui/ReleaseBadge";
 import { RemindMeButton } from "@/components/media/RemindMeButton";
 import { getContentBySlug, getRelatedContent, getSessionUser, hasContentReminder } from "@/lib/content";
-import { getVideoSource, getReleaseBadge, canPlay, isComingSoon } from "@/lib/utils";
+import { getPosterUrl, getVideoSource, getReleaseBadge, canPlay, isComingSoon } from "@/lib/utils";
 import type { ContentRow as RowType } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +45,7 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
         ? item.videoUrl
         : null;
   const videoSource = playbackUrl ? getVideoSource(playbackUrl, true) : null;
+  const posterUrl = getPosterUrl(item);
 
   const related = await getRelatedContent(item.category, item.id);
   const relatedRow: RowType | null =
@@ -64,8 +65,8 @@ export default async function WatchPage({ params, searchParams }: WatchPageProps
           <VideoPlayer source={videoSource} title={item.title} />
         ) : (
           <div className="relative flex aspect-video items-center justify-center bg-surface">
-            {item.thumbnailUrl && (
-              <Image src={item.thumbnailUrl} alt="" fill className="object-cover opacity-20" sizes="100vw" />
+            {posterUrl && (
+              <Image src={posterUrl} alt="" fill className="object-cover opacity-20" sizes="100vw" />
             )}
             <div className="relative text-center">
               {badge && <ReleaseBadge badge={badge} />}

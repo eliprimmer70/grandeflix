@@ -11,6 +11,7 @@ type Initial = {
   title?: string;
   slug?: string;
   description?: string;
+  poster_url?: string;
   thumbnail_url?: string;
   video_url?: string;
   trailer_url?: string;
@@ -103,13 +104,27 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
           require <code className="text-white/50">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
         </p>
         <MediaUploadField
-          label="Thumbnail URL"
+          label="Card image"
+          name="poster_url"
+          kind="thumbnail"
+          defaultValue={initial?.poster_url}
+          placeholder="https://… or upload JPG/PNG/WebP"
+          slugHint={slugHint}
+        />
+        <p className="-mt-2 text-xs text-white/30">
+          Shown on browse cards and the preview modal. Portrait or 16:9 works best.
+        </p>
+        <MediaUploadField
+          label="Hero image (optional)"
           name="thumbnail_url"
           kind="thumbnail"
           defaultValue={initial?.thumbnail_url}
           placeholder="https://… or upload JPG/PNG/WebP"
           slugHint={slugHint}
         />
+        <p className="-mt-2 text-xs text-white/30">
+          Wide billboard for the featured hero. Falls back to the card image if empty.
+        </p>
         <MediaUploadField
           label="Video URL (YouTube / Vimeo / file)"
           name="video_url"

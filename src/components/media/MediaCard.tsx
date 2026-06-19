@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import type { ContentItem } from "@/lib/types";
 import { ReleaseBadge } from "@/components/ui/ReleaseBadge";
 import { ContentThumbnail } from "@/components/media/ContentThumbnail";
-import { getReleaseBadge } from "@/lib/utils";
+import { getPosterUrl, getReleaseBadge } from "@/lib/utils";
 import { useCanHover } from "@/lib/hooks/useCanHover";
 
 export function MediaCard({
@@ -37,7 +37,7 @@ export function MediaCard({
         <article className="card-glow overflow-hidden rounded-xl bg-surface-raised ring-1 ring-white/[0.06] transition-shadow">
           <div className="relative aspect-video overflow-hidden">
             <ContentThumbnail
-              src={item.thumbnailUrl}
+              src={getPosterUrl(item)}
               title={item.title}
               priority={priority}
               sizes="(max-width: 640px) 40vw, 260px"

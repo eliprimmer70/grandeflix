@@ -33,6 +33,7 @@ export async function saveContent(
     title,
     slug: slugify(String(formData.get("slug") || title)),
     description: String(formData.get("description") ?? "").trim(),
+    poster_url: String(formData.get("poster_url") ?? "").trim() || null,
     thumbnail_url: String(formData.get("thumbnail_url") ?? "").trim() || null,
     video_url: String(formData.get("video_url") ?? "").trim() || null,
     trailer_url: String(formData.get("trailer_url") ?? "").trim() || null,

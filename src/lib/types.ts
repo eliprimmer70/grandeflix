@@ -20,6 +20,7 @@ export interface DbContent {
   slug: string;
   description: string;
   thumbnail_url: string | null;
+  poster_url: string | null;
   video_url: string | null;
   trailer_url: string | null;
   release_date: string | null;
@@ -35,6 +36,7 @@ export interface ContentItem {
   title: string;
   description: string;
   thumbnailUrl?: string;
+  posterUrl?: string;
   videoUrl?: string;
   trailerUrl?: string;
   releaseDate: string | null;

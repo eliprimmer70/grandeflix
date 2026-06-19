@@ -1,5 +1,19 @@
 import type { ReleaseBadge } from "./types";
 
+export function getPosterUrl(item: {
+  posterUrl?: string;
+  thumbnailUrl?: string;
+}): string | undefined {
+  return item.posterUrl ?? item.thumbnailUrl;
+}
+
+export function getHeroUrl(item: {
+  posterUrl?: string;
+  thumbnailUrl?: string;
+}): string | undefined {
+  return item.thumbnailUrl ?? item.posterUrl;
+}
+
 export function mapContent(row: import("./types").DbContent): import("./types").ContentItem {
   return {
     id: row.id,
@@ -7,6 +21,7 @@ export function mapContent(row: import("./types").DbContent): import("./types").
     title: row.title,
     description: row.description,
     thumbnailUrl: row.thumbnail_url ?? undefined,
+    posterUrl: row.poster_url ?? undefined,
     videoUrl: row.video_url ?? undefined,
     trailerUrl: row.trailer_url ?? undefined,
     releaseDate: row.release_date,

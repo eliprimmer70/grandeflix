@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import type { ContentItem } from "@/lib/types";
 import { ReleaseBadge } from "@/components/ui/ReleaseBadge";
 import { ContentThumbnail } from "@/components/media/ContentThumbnail";
-import { getReleaseBadge, canPlay } from "@/lib/utils";
+import { getReleaseBadge, canPlay, getHeroUrl } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/types";
 
 function PlayIcon() {
@@ -43,7 +43,7 @@ export function Hero({ featured }: { featured: ContentItem | null }) {
   return (
     <section className="relative h-[50vh] min-h-[280px] max-h-[420px] w-full overflow-hidden sm:h-[52vw] sm:min-h-[360px] sm:max-h-[80vh]">
       <ContentThumbnail
-        src={featured.thumbnailUrl}
+        src={getHeroUrl(featured)}
         title={featured.title}
         priority
         sizes="100vw"

@@ -25,6 +25,7 @@ export default async function EditContentPage({ params }: EditPageProps) {
             title: item.title,
             slug: item.slug,
             description: item.description,
+            poster_url: item.poster_url ?? "",
             thumbnail_url: item.thumbnail_url ?? "",
             video_url: item.video_url ?? "",
             trailer_url: item.trailer_url ?? "",

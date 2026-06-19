@@ -9,7 +9,7 @@ import { ReleaseBadge } from "@/components/ui/ReleaseBadge";
 import { ContentThumbnail } from "@/components/media/ContentThumbnail";
 import { VideoPlayer } from "@/components/media/VideoPlayer";
 import { RemindMeButton } from "@/components/media/RemindMeButton";
-import { canPlay, getReleaseBadge, getVideoSource, isComingSoon } from "@/lib/utils";
+import { canPlay, getPosterUrl, getReleaseBadge, getVideoSource, isComingSoon } from "@/lib/utils";
 
 function PlayIcon() {
   return (
@@ -119,7 +119,7 @@ export function ContentPreviewModal({
             ) : (
               <>
                 <ContentThumbnail
-                  src={item.thumbnailUrl}
+                  src={getPosterUrl(item)}
                   title={item.title}
                   priority
                   sizes="(max-width: 640px) 100vw, 768px"

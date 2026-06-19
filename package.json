@@ -13,7 +13,8 @@
     "db:admin": "pbcopy < supabase/promote-admin.sql && echo 'Admin SQL copied.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "db:coming-soon": "pbcopy < supabase/migrate-coming-soon.sql && echo 'Coming Soon migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "db:storage": "pbcopy < supabase/storage.sql && echo 'Storage SQL copied (1 GB bucket limit).' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
-    "db:storage-1gb": "pbcopy < supabase/migrate-storage-1gb.sql && echo 'Storage 1 GB migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
+    "db:storage-1gb": "pbcopy < supabase/migrate-storage-1gb.sql && echo 'Storage 1 GB migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
+    "db:poster": "pbcopy < supabase/migrate-poster-url.sql && echo 'Poster URL migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

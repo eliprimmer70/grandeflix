@@ -13,6 +13,7 @@ create table if not exists public.content (
   slug text not null unique,
   description text not null default '',
   thumbnail_url text,
+  poster_url text,
   video_url text,
   trailer_url text,
   release_date timestamptz,
