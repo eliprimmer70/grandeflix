@@ -46,6 +46,8 @@ on conflict (id) do update set role = 'admin';
 
 This creates the profile row if the signup trigger missed, then sets `role = 'admin'`.
 
+**Optional (Vercel):** set `ADMIN_BOOTSTRAP_EMAIL` and `SUPABASE_SERVICE_ROLE_KEY` (server-only) to auto-promote that email on sign-in — no SQL step after the first deploy with those vars.
+
 ---
 
 ## Vercel environment variables (Production)

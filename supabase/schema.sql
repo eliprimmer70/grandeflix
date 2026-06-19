@@ -50,6 +50,11 @@ create policy "profiles_select_own"
   on public.profiles for select
   using (auth.uid() = id);
 
+drop policy if exists "profiles_insert_own" on public.profiles;
+create policy "profiles_insert_own"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
 drop policy if exists "content_select_public" on public.content;
 create policy "content_select_public"
   on public.content for select

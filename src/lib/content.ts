@@ -1,3 +1,4 @@
+import { bootstrapAdminIfConfigured, ensureUserProfile } from "@/lib/profiles";
 import { createClient } from "@/lib/supabase/server";
 import type { DbContent } from "@/lib/types";
 import { mapContent, sanitizeSearchQuery } from "@/lib/utils";
@@ -46,6 +47,9 @@ export async function requireAdmin() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new AuthError("Sign in required.", "unauthorized");
+
+  await ensureUserProfile(supabase, user);
+  await bootstrapAdminIfConfigured(user);
 
   const { data: profile, error } = await supabase
     .from("profiles")
