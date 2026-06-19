@@ -99,7 +99,7 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
       <section className="space-y-4 rounded border border-white/[0.08] p-5">
         <h2 className="text-sm font-medium text-white/75">Media</h2>
         <p className="text-xs text-white/35">
-          Paste a YouTube/Vimeo URL or upload MP4/WebM/MOV from your device (max 500 MB). Uploads
+          Paste a YouTube/Vimeo URL or upload MP4/WebM/MOV from your device (max 50 MB). Uploads
           require <code className="text-white/50">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
         </p>
         <MediaUploadField
