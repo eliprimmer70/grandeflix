@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  getMediaUploadLimits,
-  getR2UploadStatus,
-  prepareMediaUpload,
-} from "@/app/admin/upload-actions";
+import { getMediaUploadLimits, getR2UploadStatus } from "@/app/admin/upload-actions";
 import { validateMediaFile, type MediaKind, type MediaUploadLimit } from "@/lib/media-upload";
 
-/** Stay under Vercel's 4.5 MB serverless request body limit. */
+/** Stay under Vercel's 4.5 MB serverless request body limit (with multipart overhead). */
 const SERVER_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
+const MULTIPART_CHUNK_BYTES = 3 * 1024 * 1024;
 
 type Props = {
   label: string;
@@ -66,6 +63,14 @@ export function MediaUploadField({
     };
   }, [kind]);
 
+  async function parseJsonResponse<T>(response: Response): Promise<T & { error?: string }> {
+    try {
+      return (await response.json()) as T & { error?: string };
+    } catch {
+      return {} as T & { error?: string };
+    }
+  }
+
   async function uploadViaServer(file: File) {
     const form = new FormData();
     form.append("file", file);
@@ -78,20 +83,10 @@ export function MediaUploadField({
       credentials: "same-origin",
     });
 
-    let payload: { publicUrl?: string; error?: string } = {};
-    try {
-      payload = (await response.json()) as { publicUrl?: string; error?: string };
-    } catch {
-      payload = {};
-    }
+    const payload = await parseJsonResponse<{ publicUrl?: string }>(response);
 
     if (!response.ok) {
-      setError(
-        payload.error ??
-          (response.status === 413
-            ? "File too large for server upload. Trying direct R2 upload…"
-            : `Upload failed (${response.status}).`),
-      );
+      setError(payload.error ?? `Upload failed (${response.status}).`);
       setMessage(null);
       return false;
     }
@@ -107,49 +102,98 @@ export function MediaUploadField({
     return true;
   }
 
-  async function uploadViaPresignedUrl(file: File) {
-    const prepared = await prepareMediaUpload({
-      kind,
-      filename: file.name,
-      contentType: file.type,
-      size: file.size,
-      slug: slugHint,
+  async function uploadViaMultipart(file: File) {
+    const contentType = file.type || "application/octet-stream";
+
+    const initForm = new FormData();
+    initForm.append("step", "init");
+    initForm.append("kind", kind);
+    initForm.append("filename", file.name);
+    initForm.append("contentType", contentType);
+    initForm.append("size", String(file.size));
+    if (slugHint) initForm.append("slug", slugHint);
+
+    const initResponse = await fetch("/api/admin/media-upload/multipart", {
+      method: "POST",
+      body: initForm,
+      credentials: "same-origin",
     });
+    const initPayload = await parseJsonResponse<{
+      uploadId?: string;
+      path?: string;
+      publicUrl?: string;
+    }>(initResponse);
 
-    if ("error" in prepared) {
-      setError(prepared.error);
+    if (!initResponse.ok || !initPayload.uploadId || !initPayload.path) {
+      setError(initPayload.error ?? `Failed to start upload (${initResponse.status}).`);
       setMessage(null);
       return;
     }
 
-    let response: Response;
+    const { uploadId, path } = initPayload;
+    const parts: { partNumber: number; etag: string }[] = [];
+    const totalParts = Math.ceil(file.size / MULTIPART_CHUNK_BYTES);
+
     try {
-      response = await fetch(prepared.uploadUrl, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
+      for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+        const start = (partNumber - 1) * MULTIPART_CHUNK_BYTES;
+        const chunk = file.slice(start, start + MULTIPART_CHUNK_BYTES);
+
+        const partForm = new FormData();
+        partForm.append("step", "part");
+        partForm.append("uploadId", uploadId);
+        partForm.append("path", path);
+        partForm.append("partNumber", String(partNumber));
+        partForm.append("chunk", chunk, `${file.name}.part${partNumber}`);
+
+        const partResponse = await fetch("/api/admin/media-upload/multipart", {
+          method: "POST",
+          body: partForm,
+          credentials: "same-origin",
+        });
+        const partPayload = await parseJsonResponse<{ etag?: string }>(partResponse);
+
+        if (!partResponse.ok || !partPayload.etag) {
+          throw new Error(partPayload.error ?? `Part ${partNumber} failed (${partResponse.status}).`);
+        }
+
+        parts.push({ partNumber, etag: partPayload.etag });
+        setMessage(`Uploading… ${Math.round((partNumber / totalParts) * 100)}%`);
+      }
+
+      const completeForm = new FormData();
+      completeForm.append("step", "complete");
+      completeForm.append("uploadId", uploadId);
+      completeForm.append("path", path);
+      completeForm.append("parts", JSON.stringify(parts));
+
+      const completeResponse = await fetch("/api/admin/media-upload/multipart", {
+        method: "POST",
+        body: completeForm,
+        credentials: "same-origin",
       });
-    } catch {
-      setError(
-        "Direct R2 upload blocked (CORS). Run npm run r2:cors after wrangler login, or paste a public R2 URL manually.",
-      );
-      setMessage(null);
-      return;
-    }
+      const completePayload = await parseJsonResponse<{ publicUrl?: string }>(completeResponse);
 
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      setError(
-        detail
-          ? `R2 upload failed (${response.status}). ${detail.slice(0, 120)}`
-          : `R2 upload failed (${response.status}). Check bucket CORS allows PUT from https://grandeflix.com.`,
-      );
-      setMessage(null);
-      return;
-    }
+      if (!completeResponse.ok || !completePayload.publicUrl) {
+        throw new Error(completePayload.error ?? `Failed to finalize upload (${completeResponse.status}).`);
+      }
 
-    setUrl(prepared.publicUrl);
-    setMessage("Upload complete.");
+      setUrl(completePayload.publicUrl);
+      setMessage("Upload complete.");
+    } catch (err) {
+      const abortForm = new FormData();
+      abortForm.append("step", "abort");
+      abortForm.append("uploadId", uploadId);
+      abortForm.append("path", path);
+      void fetch("/api/admin/media-upload/multipart", {
+        method: "POST",
+        body: abortForm,
+        credentials: "same-origin",
+      });
+
+      setError(err instanceof Error ? err.message : "Upload failed.");
+      setMessage(null);
+    }
   }
 
   async function uploadToR2(file: File) {
@@ -159,8 +203,8 @@ export function MediaUploadField({
     }
 
     setError(null);
-    setMessage("Uploading directly to R2…");
-    await uploadViaPresignedUrl(file);
+    setMessage("Uploading to Cloudflare R2…");
+    await uploadViaMultipart(file);
   }
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -188,8 +232,7 @@ export function MediaUploadField({
     try {
       await uploadToR2(file);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Upload failed.";
-      setError(msg === "Failed to fetch" ? "Upload failed — check R2 env vars on Vercel and try again." : msg);
+      setError(err instanceof Error ? err.message : "Upload failed.");
       setMessage(null);
     } finally {
       setUploading(false);

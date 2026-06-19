@@ -2,7 +2,11 @@
   "rules": [
     {
       "allowed": {
-        "origins": ["https://grandeflix.com", "http://localhost:3000"],
+        "origins": [
+          "https://grandeflix.com",
+          "https://www.grandeflix.com",
+          "http://localhost:3000"
+        ],
         "methods": ["PUT", "GET", "HEAD"],
         "headers": ["*"]
       },

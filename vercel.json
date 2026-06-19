@@ -1,5 +1,13 @@
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.grandeflix.com" }],
+      "destination": "https://grandeflix.com/:path*",
+      "permanent": true
+    }
+  ]
 }

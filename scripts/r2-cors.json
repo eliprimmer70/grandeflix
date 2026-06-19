@@ -2,6 +2,7 @@
   {
     "AllowedOrigins": [
       "https://grandeflix.com",
+      "https://www.grandeflix.com",
       "http://localhost:3000"
     ],
     "AllowedMethods": ["PUT", "GET", "HEAD"],

@@ -1,4 +1,11 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CreateMultipartUploadCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import {
   buildMediaPath,
@@ -72,6 +79,8 @@ function createR2Client(config: R2Config): S3Client {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
     },
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   });
 }
 
@@ -129,6 +138,119 @@ export async function putR2Object(input: {
   }
 }
 
+export async function startR2MultipartUpload(input: {
+  kind: MediaKind;
+  filename: string;
+  contentType: string;
+  size: number;
+  slug?: string;
+}): Promise<{ uploadId: string; path: string; publicUrl: string } | { error: string }> {
+  const config = getR2Config();
+  if (!config) return { error: R2_SETUP_MESSAGE };
+
+  const validationError = validateR2MediaFile(input.kind, input.contentType, input.size);
+  if (validationError) return { error: validationError };
+
+  const path = buildMediaPath(input.kind, input.slug?.trim() || "draft", input.filename);
+  const client = createR2Client(config);
+
+  try {
+    const result = await client.send(
+      new CreateMultipartUploadCommand({
+        Bucket: config.bucketName,
+        Key: path,
+        ContentType: input.contentType,
+      }),
+    );
+    if (!result.UploadId) return { error: "Failed to start multipart upload." };
+    return { uploadId: result.UploadId, path, publicUrl: getR2PublicUrl(config, path) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to start multipart upload.";
+    return { error: message };
+  }
+}
+
+export async function uploadR2MultipartPart(input: {
+  path: string;
+  uploadId: string;
+  partNumber: number;
+  body: Buffer | Uint8Array;
+}): Promise<{ etag: string } | { error: string }> {
+  const config = getR2Config();
+  if (!config) return { error: R2_SETUP_MESSAGE };
+
+  const client = createR2Client(config);
+
+  try {
+    const result = await client.send(
+      new UploadPartCommand({
+        Bucket: config.bucketName,
+        Key: input.path,
+        UploadId: input.uploadId,
+        PartNumber: input.partNumber,
+        Body: input.body,
+      }),
+    );
+    if (!result.ETag) return { error: "Failed to upload part." };
+    return { etag: result.ETag };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to upload part.";
+    return { error: message };
+  }
+}
+
+export async function completeR2MultipartUpload(input: {
+  path: string;
+  uploadId: string;
+  parts: { partNumber: number; etag: string }[];
+}): Promise<{ publicUrl: string } | { error: string }> {
+  const config = getR2Config();
+  if (!config) return { error: R2_SETUP_MESSAGE };
+
+  const client = createR2Client(config);
+
+  try {
+    await client.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: config.bucketName,
+        Key: input.path,
+        UploadId: input.uploadId,
+        MultipartUpload: {
+          Parts: input.parts
+            .slice()
+            .sort((a, b) => a.partNumber - b.partNumber)
+            .map((part) => ({ PartNumber: part.partNumber, ETag: part.etag })),
+        },
+      }),
+    );
+    return { publicUrl: getR2PublicUrl(config, input.path) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to complete multipart upload.";
+    return { error: message };
+  }
+}
+
+export async function abortR2MultipartUpload(input: {
+  path: string;
+  uploadId: string;
+}): Promise<void> {
+  const config = getR2Config();
+  if (!config) return;
+
+  const client = createR2Client(config);
+  try {
+    await client.send(
+      new AbortMultipartUploadCommand({
+        Bucket: config.bucketName,
+        Key: input.path,
+        UploadId: input.uploadId,
+      }),
+    );
+  } catch {
+    /* best effort */
+  }
+}
+
 export async function createR2PresignedUpload(input: {
   kind: MediaKind;
   filename: string;
@@ -149,7 +271,6 @@ export async function createR2PresignedUpload(input: {
     Bucket: config.bucketName,
     Key: path,
     ContentType: input.contentType,
-    ContentLength: input.size,
   });
 
   try {
