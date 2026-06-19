@@ -3,16 +3,29 @@ import { getSupabaseEnv, updateSession } from "@/lib/supabase/middleware";
 
 const PROTECTED = ["/browse", "/watch", "/search"];
 
+function redirectTo(
+  request: NextRequest,
+  pathname: string,
+  params?: Record<string, string>,
+) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  url.search = "";
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.set(key, value);
+    }
+  }
+  return NextResponse.redirect(url);
+}
+
 export async function proxy(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
 
     if (!getSupabaseEnv()) {
       if (pathname.startsWith("/admin") || PROTECTED.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/setup";
-        url.searchParams.set("reason", "env");
-        return NextResponse.redirect(url);
+        return redirectTo(request, "/setup", { reason: "env" });
       }
       return NextResponse.next();
     }
@@ -24,23 +37,17 @@ export async function proxy(request: NextRequest) {
     );
 
     if (needsAuth && !user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
-      url.searchParams.set("signup", "1");
-      return NextResponse.redirect(url);
+      return redirectTo(request, "/", { signup: "1" });
     }
 
     if (pathname === "/" && user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/browse";
-      return NextResponse.redirect(url);
+      return redirectTo(request, "/browse");
     }
 
     if (pathname.startsWith("/admin") && !user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("redirect", pathname === "/admin/denied" ? "/admin" : pathname);
-      return NextResponse.redirect(url);
+      return redirectTo(request, "/login", {
+        redirect: pathname === "/admin/denied" ? "/admin" : pathname,
+      });
     }
 
     return supabaseResponse;
@@ -50,19 +57,16 @@ export async function proxy(request: NextRequest) {
   }
 }
 
-/** Only page routes — never intercept Next.js `/_next/*` (fixes client navigation errors) */
+/**
+ * Page navigations only — never intercept Next.js internals:
+ * - /_next/* (static, flight, webpack-hmr, data)
+ * - *.rsc and *.segment.rsc (RSC + segment prefetch)
+ * - static assets in /public
+ *
+ * The previous catch-all matcher ran auth on those paths and broke client navigation.
+ */
 export const config = {
   matcher: [
-    "/",
-    "/browse",
-    "/browse/:path*",
-    "/watch/:path*",
-    "/search",
-    "/login",
-    "/signup",
-    "/setup",
-    "/admin",
-    "/admin/:path*",
-    "/auth/callback",
+    "/((?!_next/|.*\\.segments/|.*\\.rsc$|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff2?)$).*)",
   ],
 };
