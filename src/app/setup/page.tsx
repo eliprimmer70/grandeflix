@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import Link from "next/link";
-import { supabaseSetup } from "@/data/setup";
+import { r2Setup, supabaseSetup } from "@/data/setup";
 import { SetupClient } from "./SetupClient";
 
 export const metadata = { title: "Setup" };
@@ -147,6 +147,122 @@ on conflict (id) do update set role = 'admin';`}
             </div>
           </li>
         </ol>
+
+        <section id="r2" className="mt-12 rounded-xl border border-white/10 bg-white/[0.02] p-6">
+          <h2 className="font-display text-lg font-semibold text-white">Cloudflare R2 (large videos)</h2>
+          <p className="mt-2 text-sm text-white/55">
+            Optional — enables <strong className="text-white/80">Upload to Cloudflare R2</strong> in
+            admin for multi-GB fan films. Posters and short clips can stay on Supabase.
+          </p>
+          <ol className="mt-6 space-y-5 text-sm text-white/70">
+            <li className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-200">
+                1
+              </span>
+              <div>
+                <p className="font-medium text-white">Create an R2 bucket</p>
+                <a
+                  href={r2Setup.dashboardUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-amber-600/80 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+                >
+                  Open Cloudflare R2 →
+                </a>
+                <p className="mt-2 text-xs text-white/40">
+                  Click <strong className="text-white/60">Create bucket</strong> → name it{" "}
+                  <code className="text-white/55">{r2Setup.bucketName}</code> → Create.
+                </p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-200">
+                2
+              </span>
+              <div>
+                <p className="font-medium text-white">Enable public access</p>
+                <a
+                  href={r2Setup.publicBucketsDocs}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-brand-bright hover:underline"
+                >
+                  R2 public buckets docs →
+                </a>
+                <p className="mt-2 text-white/45">
+                  Bucket → <strong className="text-white/70">Settings</strong> →{" "}
+                  <strong className="text-white/70">Public access</strong> → enable{" "}
+                  <code className="text-white/70">r2.dev</code> subdomain (or add a custom domain like{" "}
+                  <code className="text-white/70">media.grandeflix.com</code>). Copy the public URL
+                  base — e.g. <code className="text-white/70">https://pub-xxxx.r2.dev</code>.
+                </p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-200">
+                3
+              </span>
+              <div>
+                <p className="font-medium text-white">Create an R2 API token</p>
+                <a
+                  href={r2Setup.apiTokensDocs}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-brand-bright hover:underline"
+                >
+                  R2 API tokens docs →
+                </a>
+                <p className="mt-2 text-white/45">
+                  R2 overview → <strong className="text-white/70">Manage R2 API Tokens</strong> →{" "}
+                  <strong className="text-white/70">Create API token</strong> → permissions{" "}
+                  <strong className="text-white/70">Object Read &amp; Write</strong> scoped to your
+                  bucket. Save the Access Key ID and Secret Access Key (shown once).
+                </p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-200">
+                4
+              </span>
+              <div>
+                <p className="font-medium text-white">Set bucket CORS (required for admin uploads)</p>
+                <a
+                  href={r2Setup.corsDocs}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-brand-bright hover:underline"
+                >
+                  R2 CORS docs →
+                </a>
+                <p className="mt-2 text-white/45">
+                  Bucket → <strong className="text-white/70">Settings</strong> →{" "}
+                  <strong className="text-white/70">CORS policy</strong> → paste JSON from{" "}
+                  <code className="text-white/70">scripts/r2-cors.json</code> in the repo (or run{" "}
+                  <code className="text-white/70">npm run r2:cors</code> after Wrangler login).
+                </p>
+              </div>
+            </li>
+            <li className="flex gap-3">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-xs font-bold text-amber-200">
+                5
+              </span>
+              <div>
+                <p className="font-medium text-white">Add env vars to Vercel and redeploy</p>
+                <pre className="mt-2 overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-3 text-xs text-white/60">
+{`R2_ACCOUNT_ID=your-account-id
+R2_ACCESS_KEY_ID=your-access-key-id
+R2_SECRET_ACCESS_KEY=your-secret-access-key
+R2_BUCKET_NAME=${r2Setup.bucketName}
+R2_PUBLIC_URL=https://pub-xxxx.r2.dev`}
+                </pre>
+                <p className="mt-2 text-xs text-white/40">
+                  Account ID is in the Cloudflare dashboard sidebar. Never prefix R2 secrets with{" "}
+                  <code className="text-white/55">NEXT_PUBLIC_</code>.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </section>
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link href="/signup" className="btn-primary rounded-lg px-5 py-2.5 text-sm">

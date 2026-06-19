@@ -62,13 +62,41 @@ To apply the bucket limit via API (requires Pro + raised global limit): `npm run
 
 Supabase Storage is fine for posters and short clips, but multi-GB fan films exceed the Free-tier upload cap. **Cloudflare R2** offers **10 GB free storage** with **no egress fees** — ideal for direct MP4 links played by the built-in HTML5 player.
 
-1. **Create a bucket** in the [Cloudflare dashboard](https://dash.cloudflare.com/) → **R2** → **Create bucket**.
-2. **Enable public access** — either turn on the **r2.dev subdomain** for the bucket, or connect a **custom domain** under **Settings → Public access**. See [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/).
-3. **Upload your video** — drag the `.mp4` into the bucket (Cloudflare dashboard, [Wrangler CLI](https://developers.cloudflare.com/r2/objects/upload-objects/), or any S3-compatible tool).
-4. **Copy the public URL** — e.g. `https://pub-xxxx.r2.dev/my-bucket/fan-movie.mp4` or your custom domain path.
-5. **Paste in admin** — in **Video URL** (or **Trailer URL**) on `/admin`, paste the R2 URL and save. No extra env vars required for playback.
+#### Option A — Upload from admin (recommended)
 
-The player treats `*.r2.dev` URLs and any direct `.mp4` / `.webm` / `.mov` link as native HTML5 video.
+Once R2 env vars are set in Vercel (see below), admins can use **Upload to Cloudflare R2** on `/admin` for video and trailer fields. Files are stored at `videos/{slug}/…`, `trailers/{slug}/…`, or `thumbnails/{slug}/…` and the public URL is saved automatically.
+
+#### Option B — Manual upload + paste URL
+
+1. **Create a bucket** in the [Cloudflare dashboard](https://dash.cloudflare.com/) → **R2** → **Create bucket** (e.g. `grandeflix-media`).
+2. **Enable public access** — turn on the **r2.dev subdomain** for the bucket, or connect a **custom domain** under **Settings → Public access**. See [R2 public buckets](https://developers.cloudflare.com/r2/buckets/public-buckets/).
+3. **Create an API token** — **R2** → **Manage R2 API Tokens** → **Create API token** with **Object Read & Write** on your bucket. Save the Access Key ID and Secret Access Key.
+4. **Upload your video** — drag the `.mp4` into the bucket, or use the admin R2 upload button.
+5. **Paste in admin** — in **Video URL** (or **Trailer URL**) on `/admin`, paste the R2 URL and save.
+
+The player treats `*.r2.dev` URLs, your custom R2 domain, and any direct `.mp4` / `.webm` / `.mov` link as native HTML5 video.
+
+#### R2 environment variables (Vercel, server-only)
+
+| Variable | Where to find it |
+|----------|------------------|
+| `R2_ACCOUNT_ID` | Cloudflare dashboard → any page → right sidebar **Account ID** |
+| `R2_ACCESS_KEY_ID` | R2 → Manage R2 API Tokens → token you created |
+| `R2_SECRET_ACCESS_KEY` | Shown once when creating the token |
+| `R2_BUCKET_NAME` | Your bucket name, e.g. `grandeflix-media` |
+| `R2_PUBLIC_URL` | Public bucket URL — e.g. `https://pub-xxxx.r2.dev` (no trailing slash) or `https://media.grandeflix.com` |
+
+Add all five to **Vercel → Settings → Environment Variables** (Production + Preview), then **redeploy**. Never use `NEXT_PUBLIC_` for R2 secrets.
+
+#### R2 bucket CORS (required for admin uploads)
+
+Browser uploads use presigned PUT URLs. In the Cloudflare dashboard → your bucket → **Settings → CORS policy**, paste the JSON from **`scripts/r2-cors.json`** (allows `https://grandeflix.com` and `http://localhost:3000`). Or with Wrangler after login:
+
+```bash
+npx wrangler r2 bucket cors put grandeflix-media --file scripts/r2-cors.json
+```
+
+See [R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/).
 
 ---
 
@@ -79,6 +107,12 @@ The player treats `*.r2.dev` URLs and any direct `.mp4` / `.webm` / `.mov` link 
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://psicdsfgkqhjvqreroxj.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase **anon** JWT |
 | `NEXT_PUBLIC_SITE_URL` | `https://grandeflix.com` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase **service_role** JWT (admin uploads) |
+| `R2_ACCOUNT_ID` | Cloudflare account ID (large video uploads) |
+| `R2_ACCESS_KEY_ID` | R2 API token access key |
+| `R2_SECRET_ACCESS_KEY` | R2 API token secret |
+| `R2_BUCKET_NAME` | e.g. `grandeflix-media` |
+| `R2_PUBLIC_URL` | Public bucket URL, e.g. `https://pub-xxxx.r2.dev` |
 
 **Redeploy** after updating env vars.
 

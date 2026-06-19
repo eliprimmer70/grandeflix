@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/content";
 import {
   buildMediaPath,
   buildMediaUploadLimit,
+  formatBytesDetailed,
   formatStorageError,
   formatUploadSizeError,
   getPublicMediaUrl,
@@ -13,6 +14,12 @@ import {
   type MediaKind,
   type MediaUploadLimit,
 } from "@/lib/media-upload";
+import {
+  createR2PresignedUpload,
+  isR2Configured,
+  R2_MAX_BYTES,
+  R2_SETUP_MESSAGE,
+} from "@/lib/r2";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
@@ -23,6 +30,20 @@ export type UploadPrepareResult =
       publicUrl: string;
     }
   | { error: string };
+
+export type R2UploadPrepareResult =
+  | {
+      uploadUrl: string;
+      publicUrl: string;
+      path: string;
+    }
+  | { error: string };
+
+export type R2UploadStatus = {
+  configured: boolean;
+  maxLabel: string;
+  setupMessage: string;
+};
 
 export type MediaUploadLimitsResult =
   | Record<MediaKind, MediaUploadLimit>
@@ -81,6 +102,24 @@ export async function getMediaUploadLimits(): Promise<MediaUploadLimitsResult> {
   };
 }
 
+export async function getR2UploadStatus(): Promise<R2UploadStatus> {
+  try {
+    await requireAdmin();
+  } catch {
+    return {
+      configured: false,
+      maxLabel: formatBytesDetailed(R2_MAX_BYTES),
+      setupMessage: "Unauthorized.",
+    };
+  }
+
+  return {
+    configured: isR2Configured(),
+    maxLabel: formatBytesDetailed(R2_MAX_BYTES),
+    setupMessage: R2_SETUP_MESSAGE,
+  };
+}
+
 export async function prepareMediaUpload(input: {
   kind: MediaKind;
   filename: string;
@@ -118,7 +157,6 @@ export async function prepareMediaUpload(input: {
   }
 
   const path = buildMediaPath(input.kind, input.slug?.trim() || "draft", input.filename);
-  // Signed upload URLs inherit bucket + global Supabase limits; no per-URL size override.
   const { data, error } = await service.storage.from(MEDIA_BUCKET).createSignedUploadUrl(path);
 
   if (error || !data) {
@@ -135,4 +173,24 @@ export async function prepareMediaUpload(input: {
     token: data.token,
     publicUrl: getPublicMediaUrl(env.url, data.path),
   };
+}
+
+export async function prepareR2Upload(input: {
+  kind: MediaKind;
+  filename: string;
+  contentType: string;
+  size: number;
+  slug?: string;
+}): Promise<R2UploadPrepareResult> {
+  try {
+    await requireAdmin();
+  } catch {
+    return { error: "Unauthorized." };
+  }
+
+  if (input.kind !== "video" && input.kind !== "trailer") {
+    return { error: "R2 uploads are only supported for video and trailer files." };
+  }
+
+  return createR2PresignedUpload(input);
 }

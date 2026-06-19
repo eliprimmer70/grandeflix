@@ -19,9 +19,14 @@
     "db:storage:check": "node scripts/check-storage-limit.mjs",
     "db:poster": "pbcopy < supabase/migrate-poster-url.sql && echo 'Poster URL migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
     "db:release-tba": "pbcopy < supabase/migrate-release-date-tba.sql && echo 'Release date TBA migration copied.' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
-    "db:content-columns": "pbcopy < supabase/migrate-content-columns.sql && echo 'Content columns migration copied (poster_url + release_date_tba).' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
+    "db:content-columns": "pbcopy < supabase/migrate-content-columns.sql && echo 'Content columns migration copied (poster_url + release_date_tba).' && open -a 'Brave Browser' https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
+    "r2:open": "open -a 'Brave Browser' 'https://dash.cloudflare.com/?to=/:account/r2/overview'",
+    "r2:tokens": "open -a 'Brave Browser' 'https://dash.cloudflare.com/?to=/:account/r2/api-tokens'",
+    "r2:cors": "npx wrangler r2 bucket cors put grandeflix-media --file scripts/r2-cors.json"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1073.0",
+    "@aws-sdk/s3-request-presigner": "^3.1073.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
     "framer-motion": "^12.23.24",

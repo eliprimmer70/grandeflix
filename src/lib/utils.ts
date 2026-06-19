@@ -82,20 +82,43 @@ export function getEmbedUrl(url: string, autoplay = false): string | null {
   if (!parsed) return null;
   const play = autoplay ? 1 : 0;
   if (parsed.provider === "vimeo") {
-    return `https://player.vimeo.com/video/${parsed.videoId}?autoplay=${play}&title=0&byline=0&portrait=0`;
+    return `https://player.vimeo.com/video/${parsed.videoId}?autoplay=${play}&title=0&byline=0&portrait=0&dnt=1`;
   }
-  return `https://www.youtube.com/embed/${parsed.videoId}?autoplay=${play}&rel=0&modestbranding=1`;
+  const params = new URLSearchParams({
+    autoplay: String(play),
+    controls: "0",
+    modestbranding: "1",
+    rel: "0",
+    showinfo: "0",
+    iv_load_policy: "3",
+    playsinline: "1",
+    fs: "1",
+  });
+  return `https://www.youtube-nocookie.com/embed/${parsed.videoId}?${params.toString()}`;
 }
 
 export type VideoSource =
-  | { type: "embed"; url: string }
+  | { type: "embed"; url: string; provider: "youtube" | "vimeo" }
   | { type: "direct"; url: string };
 
 export function isDirectVideoUrl(url: string): boolean {
   try {
     const parsed = new URL(url.trim());
-    if (/\.(mp4|webm|mov)(\?|$)/i.test(parsed.pathname)) return true;
+    const pathAndQuery = `${parsed.pathname}${parsed.search}`;
+    if (/\.(mp4|webm|mov)(\?|$|&)/i.test(pathAndQuery)) return true;
     if (parsed.hostname.endsWith(".r2.dev")) return true;
+    if (parsed.hostname.endsWith(".b-cdn.net")) return true;
+
+    const r2PublicUrl = process.env.R2_PUBLIC_URL;
+    if (r2PublicUrl) {
+      try {
+        const r2Host = new URL(r2PublicUrl).hostname;
+        if (parsed.hostname === r2Host) return true;
+      } catch {
+        /* ignore invalid R2_PUBLIC_URL */
+      }
+    }
+
     if (
       parsed.hostname.includes("supabase.co") &&
       /\/storage\/v1\/object\/public\/media\/(videos|trailers)\//.test(parsed.pathname)
@@ -109,8 +132,11 @@ export function isDirectVideoUrl(url: string): boolean {
 }
 
 export function getVideoSource(url: string, autoplay = false): VideoSource | null {
-  const embed = getEmbedUrl(url, autoplay);
-  if (embed) return { type: "embed", url: embed };
+  const parsed = parseVideoUrl(url);
+  if (parsed) {
+    const embed = getEmbedUrl(url, autoplay);
+    if (embed) return { type: "embed", url: embed, provider: parsed.provider };
+  }
   if (isDirectVideoUrl(url)) return { type: "direct", url: url.trim() };
   return null;
 }

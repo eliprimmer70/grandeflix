@@ -119,18 +119,22 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
       <section className="space-y-4 rounded border border-white/[0.08] p-5">
         <h2 className="text-sm font-medium text-white/75">Media</h2>
         <p className="text-xs text-white/35">
-          Paste a YouTube/Vimeo URL, a{" "}
-          <a
-            href="https://developers.cloudflare.com/r2/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-bright hover:underline"
-          >
-            Cloudflare R2
-          </a>{" "}
-          public MP4 link (<code className="text-white/50">*.r2.dev</code> or custom domain), or upload
-          MP4/WebM/MOV from your device (max 1 GB). Uploads require{" "}
-          <code className="text-white/50">SUPABASE_SERVICE_ROLE_KEY</code> on the server.
+          <strong className="font-medium text-white/55">On-site playback (recommended):</strong> upload
+          MP4 under 50&nbsp;MB to Supabase, or paste any direct{" "}
+          <code className="text-white/50">.mp4</code> / <code className="text-white/50">.webm</code>{" "}
+          URL (Supabase Storage, Cloudflare R2, Bunny CDN, etc.). Videos play in GRANDEFLIX&apos;s
+          native player — no YouTube branding.
+        </p>
+        <p className="text-xs text-white/30">
+          <strong className="font-medium text-white/45">Large files (&gt;50&nbsp;MB):</strong> Supabase
+          Free caps uploads at 50&nbsp;MB. Upgrade to Supabase Pro and raise the global Storage limit
+          for self-hosted uploads, or upload to Cloudflare R2 / any CDN and paste the public MP4 link.
+          R2 admin uploads need <code className="text-white/50">R2_*</code> env vars (see README).
+        </p>
+        <p className="text-xs text-white/30">
+          <strong className="font-medium text-white/45">YouTube / Vimeo (fallback):</strong> still works,
+          but shows an external player with platform chrome. Use direct MP4 for the main film when
+          possible.
         </p>
         <MediaUploadField
           label="Card image"
@@ -141,7 +145,7 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
           slugHint={slugHint}
         />
         <p className="-mt-2 text-xs text-white/30">
-          Shown on browse cards and the preview modal. Portrait or 16:9 works best.
+          Shown on browse cards and the watch page. Portrait or 16:9 works best.
         </p>
         <MediaUploadField
           label="Hero image (optional)"
@@ -155,33 +159,28 @@ export function ContentEditor({ initial }: { initial?: Initial }) {
           Wide billboard for the featured hero. Falls back to the card image if empty.
         </p>
         <MediaUploadField
-          label="Video URL (YouTube / Vimeo / R2 / file)"
+          label="Main video URL"
           name="video_url"
           kind="video"
           defaultValue={initial?.video_url}
-          placeholder="https://youtube.com/…, https://….r2.dev/…/video.mp4, or upload MP4"
+          placeholder="https://….supabase.co/…/video.mp4, https://….r2.dev/…/film.mp4, or YouTube"
           slugHint={slugHint}
         />
         <p className="-mt-2 text-xs text-white/30">
-          For multi-GB films, upload to{" "}
-          <a
-            href="https://developers.cloudflare.com/r2/buckets/public-buckets/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-bright hover:underline"
-          >
-            Cloudflare R2
-          </a>{" "}
-          (10 GB free, no egress fees) and paste the public URL here.
+          Native on-site player for direct MP4/WebM links. Multi-GB films: host on R2 or another CDN,
+          then paste the public URL — no file-size cap when linking externally.
         </p>
         <MediaUploadField
-          label="Trailer URL (YouTube / Vimeo / R2 / file)"
+          label="Trailer URL"
           name="trailer_url"
           kind="trailer"
           defaultValue={initial?.trailer_url}
-          placeholder="https://vimeo.com/…, https://….r2.dev/…/trailer.mp4, or upload MP4"
+          placeholder="https://….mp4 or https://vimeo.com/…"
           slugHint={slugHint}
         />
+        <p className="-mt-2 text-xs text-white/30">
+          Trailers use the same native player when you provide a direct file URL.
+        </p>
       </section>
 
       <button
