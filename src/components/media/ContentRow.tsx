@@ -1,15 +1,41 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ContentRow as RowType } from "@/lib/types";
 import { MediaCard } from "./MediaCard";
 import { cn } from "@/lib/utils";
 import { useCanHover } from "@/lib/hooks/useCanHover";
 
-export function ContentRow({ row }: { row: RowType }) {
+export function ContentRow({
+  row,
+  hideCardBadges = false,
+}: {
+  row: RowType;
+  hideCardBadges?: boolean;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
+  const [canScroll, setCanScroll] = useState(false);
   const canHover = useCanHover();
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const updateScrollState = () => {
+      setCanScroll(el.scrollWidth > el.clientWidth + 4);
+    };
+
+    updateScrollState();
+    const observer = new ResizeObserver(updateScrollState);
+    observer.observe(el);
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [row.items.length]);
 
   if (row.items.length === 0) return null;
 
@@ -20,7 +46,7 @@ export function ContentRow({ row }: { row: RowType }) {
     });
   }
 
-  const showArrows = canHover ? hovered : true;
+  const showArrows = canScroll && (canHover ? hovered : true);
 
   return (
     <section
@@ -44,7 +70,12 @@ export function ContentRow({ row }: { row: RowType }) {
           )}
         >
           {row.items.map((item, i) => (
-            <MediaCard key={item.id} item={item} priority={i < 3} />
+            <MediaCard
+              key={item.id}
+              item={item}
+              priority={i < 3}
+              showBadge={!hideCardBadges}
+            />
           ))}
         </div>
       </div>

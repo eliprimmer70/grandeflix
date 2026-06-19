@@ -1,15 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import type { ContentItem } from "@/lib/types";
 import { ReleaseBadge } from "@/components/ui/ReleaseBadge";
+import { ContentThumbnail } from "@/components/media/ContentThumbnail";
 import { getReleaseBadge } from "@/lib/utils";
 import { useCanHover } from "@/lib/hooks/useCanHover";
 
-export function MediaCard({ item, priority = false }: { item: ContentItem; priority?: boolean }) {
-  const badge = getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon);
+export function MediaCard({
+  item,
+  priority = false,
+  showBadge = true,
+}: {
+  item: ContentItem;
+  priority?: boolean;
+  showBadge?: boolean;
+}) {
+  const badge = showBadge ? getReleaseBadge(item.releaseDate, item.videoUrl, item.comingSoon) : null;
   const canHover = useCanHover();
 
   return (
@@ -24,22 +32,17 @@ export function MediaCard({ item, priority = false }: { item: ContentItem; prior
         className="group block w-[40vw] min-w-[132px] max-w-[168px] sm:w-[180px] sm:max-w-[200px] md:w-[228px] md:max-w-none lg:w-[260px]"
       >
         <article className="card-glow overflow-hidden rounded-xl bg-surface-raised ring-1 ring-white/[0.06] transition-shadow">
-          <div className="relative aspect-video">
-            {item.thumbnailUrl ? (
-              <Image
-                src={item.thumbnailUrl}
-                alt=""
-                fill
-                priority={priority}
-                className="object-cover transition duration-300 group-hover:brightness-110"
-                sizes="(max-width: 640px) 40vw, 260px"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-surface-raised" />
-            )}
+          <div className="relative aspect-video overflow-hidden">
+            <ContentThumbnail
+              src={item.thumbnailUrl}
+              title={item.title}
+              priority={priority}
+              sizes="(max-width: 640px) 40vw, 260px"
+              className="object-cover transition duration-300 group-hover:brightness-110"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
             {badge && (
-              <div className="absolute left-2 top-2">
+              <div className="absolute left-2 top-2 z-10">
                 <ReleaseBadge badge={badge} />
               </div>
             )}

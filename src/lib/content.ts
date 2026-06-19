@@ -104,7 +104,11 @@ export async function getContentRows() {
     id: cat.value,
     title: cat.label,
     category: cat.value,
-    items: mapped.filter((item) => item.category === cat.value),
+    items: mapped.filter(
+      (item) =>
+        item.category === cat.value &&
+        !isComingSoon(item.releaseDate, item.videoUrl, item.comingSoon),
+    ),
   })).filter((row) => row.items.length > 0);
 }
 

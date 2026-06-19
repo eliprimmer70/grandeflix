@@ -24,29 +24,25 @@ export default async function BrowsePage() {
         }
       : null;
 
+  const hasRows = Boolean(comingSoonRow) || rows.length > 0;
+
   return (
     <PageFade>
       <div className="bg-background">
         <Hero featured={featured} />
-        {comingSoonRow && (
-          <div className="relative z-10 -mt-12 sm:-mt-20 md:-mt-36 lg:-mt-44">
-            <ContentRow row={comingSoonRow} />
-          </div>
-        )}
-        {rows.length > 0 ? (
-          <div className={`relative z-10 space-y-1 pb-16 safe-bottom sm:space-y-2 sm:pb-20 ${comingSoonRow ? "" : "-mt-12 sm:-mt-20 md:-mt-36 lg:-mt-44"}`}>
+        {hasRows ? (
+          <div className="relative z-10 -mt-8 space-y-1 pb-16 safe-bottom sm:-mt-12 sm:space-y-2 md:-mt-16 lg:-mt-20 sm:pb-20">
+            {comingSoonRow && <ContentRow row={comingSoonRow} hideCardBadges />}
             {rows.map((row) => (
               <ContentRow key={row.id} row={row} />
             ))}
           </div>
-        ) : !comingSoonRow ? (
+        ) : (
           <EmptyState
             title="No fan videos yet"
             description="Fan movies, tour videos, and edits will show up here once they're added."
-            className="-mt-16 py-24"
+            className="py-24"
           />
-        ) : (
-          <div className="pb-16 safe-bottom" />
         )}
       </div>
     </PageFade>

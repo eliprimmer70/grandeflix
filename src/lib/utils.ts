@@ -128,6 +128,16 @@ export function isReleased(releaseDate: string | null): boolean {
   return new Date(releaseDate) <= new Date();
 }
 
+export function isValidThumbnailUrl(url?: string | null): boolean {
+  if (!url?.trim()) return false;
+  try {
+    const parsed = new URL(url.trim());
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function cn(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
