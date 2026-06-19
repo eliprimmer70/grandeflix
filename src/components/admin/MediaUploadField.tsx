@@ -8,6 +8,9 @@ import {
 } from "@/app/admin/upload-actions";
 import { validateMediaFile, type MediaKind, type MediaUploadLimit } from "@/lib/media-upload";
 
+/** Stay under Vercel's 4.5 MB serverless request body limit. */
+const SERVER_UPLOAD_MAX_BYTES = 4 * 1024 * 1024;
+
 type Props = {
   label: string;
   name: string;
@@ -63,7 +66,48 @@ export function MediaUploadField({
     };
   }, [kind]);
 
-  async function uploadToR2(file: File) {
+  async function uploadViaServer(file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("kind", kind);
+    if (slugHint) form.append("slug", slugHint);
+
+    const response = await fetch("/api/admin/media-upload", {
+      method: "POST",
+      body: form,
+      credentials: "same-origin",
+    });
+
+    let payload: { publicUrl?: string; error?: string } = {};
+    try {
+      payload = (await response.json()) as { publicUrl?: string; error?: string };
+    } catch {
+      payload = {};
+    }
+
+    if (!response.ok) {
+      setError(
+        payload.error ??
+          (response.status === 413
+            ? "File too large for server upload. Trying direct R2 upload…"
+            : `Upload failed (${response.status}).`),
+      );
+      setMessage(null);
+      return false;
+    }
+
+    if (!payload.publicUrl) {
+      setError("Upload succeeded but no URL was returned.");
+      setMessage(null);
+      return false;
+    }
+
+    setUrl(payload.publicUrl);
+    setMessage("Upload complete.");
+    return true;
+  }
+
+  async function uploadViaPresignedUrl(file: File) {
     const prepared = await prepareMediaUpload({
       kind,
       filename: file.name,
@@ -78,18 +122,27 @@ export function MediaUploadField({
       return;
     }
 
-    const response = await fetch(prepared.uploadUrl, {
-      method: "PUT",
-      body: file,
-      headers: { "Content-Type": file.type },
-    });
+    let response: Response;
+    try {
+      response = await fetch(prepared.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+    } catch {
+      setError(
+        "Direct R2 upload blocked (CORS). Run npm run r2:cors after wrangler login, or paste a public R2 URL manually.",
+      );
+      setMessage(null);
+      return;
+    }
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "");
       setError(
         detail
-          ? `Upload failed (${response.status}). Check R2 bucket CORS allows PUT from this site. ${detail.slice(0, 120)}`
-          : `Upload failed (${response.status}). Check R2 bucket CORS allows PUT from https://grandeflix.com and http://localhost:3000.`,
+          ? `R2 upload failed (${response.status}). ${detail.slice(0, 120)}`
+          : `R2 upload failed (${response.status}). Check bucket CORS allows PUT from https://grandeflix.com.`,
       );
       setMessage(null);
       return;
@@ -97,6 +150,17 @@ export function MediaUploadField({
 
     setUrl(prepared.publicUrl);
     setMessage("Upload complete.");
+  }
+
+  async function uploadToR2(file: File) {
+    if (file.size <= SERVER_UPLOAD_MAX_BYTES) {
+      const ok = await uploadViaServer(file);
+      if (ok) return;
+    }
+
+    setError(null);
+    setMessage("Uploading directly to R2…");
+    await uploadViaPresignedUrl(file);
   }
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -114,7 +178,7 @@ export function MediaUploadField({
     }
 
     if (!r2Configured) {
-      setError("Cloudflare R2 is not configured. See README or grandeflix.com/setup#r2.");
+      setError("Cloudflare R2 is not configured. See grandeflix.com/setup#r2.");
       return;
     }
 
@@ -124,7 +188,8 @@ export function MediaUploadField({
     try {
       await uploadToR2(file);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
+      const msg = err instanceof Error ? err.message : "Upload failed.";
+      setError(msg === "Failed to fetch" ? "Upload failed — check R2 env vars on Vercel and try again." : msg);
       setMessage(null);
     } finally {
       setUploading(false);
