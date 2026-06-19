@@ -9,10 +9,10 @@ export async function proxy(request: NextRequest) {
 
     if (!getSupabaseEnv()) {
       if (pathname.startsWith("/admin") || PROTECTED.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
-        return NextResponse.json(
-          { error: "Server misconfigured: missing Supabase environment variables." },
-          { status: 503 },
-        );
+        const url = request.nextUrl.clone();
+        url.pathname = "/setup";
+        url.searchParams.set("reason", "env");
+        return NextResponse.redirect(url);
       }
       return NextResponse.next();
     }
@@ -50,8 +50,19 @@ export async function proxy(request: NextRequest) {
   }
 }
 
+/** Only page routes — never intercept Next.js `/_next/*` (fixes client navigation errors) */
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/",
+    "/browse",
+    "/browse/:path*",
+    "/watch/:path*",
+    "/search",
+    "/login",
+    "/signup",
+    "/setup",
+    "/admin",
+    "/admin/:path*",
+    "/auth/callback",
   ],
 };

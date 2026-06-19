@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { SupabaseSetupNotice } from "./SupabaseSetupNotice";
 
 export function LoginForm() {
   const router = useRouter();
@@ -11,6 +13,10 @@ export function LoginForm() {
   const redirect = searchParams.get("redirect") ?? "/browse";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  if (!hasSupabaseEnv()) {
+    return <SupabaseSetupNotice />;
+  }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

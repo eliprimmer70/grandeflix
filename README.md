@@ -22,7 +22,9 @@ npm run dev
 
 ### 1. Create database tables
 
-In **Supabase → SQL Editor**, run the full contents of **`supabase/schema.sql`**.
+**Easiest:** open **[grandeflix.com/setup](https://grandeflix.com/setup)** (after deploy) or the [Supabase SQL Editor](https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new) directly → copy SQL from the setup page → **Run**.
+
+Or run locally: open **`supabase/schema.sql`** in the SQL Editor.
 
 Or with CLI (after `supabase login` + `supabase link --project-ref psicdsfgkqhjvqreroxj`):
 
@@ -69,6 +71,7 @@ update public.profiles set role = 'admin' where email = 'eli.primmer@gmail.com';
 | `/watch/[slug]` | Video / trailer |
 | `/search` | Search |
 | `/login` · `/signup` | Auth |
+| `/setup` | One-click DB setup guide + SQL copy |
 | `/admin` | CMS (admin only) |
 
 ## Content categories

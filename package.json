@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:setup": "open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new",
+    "db:open": "open supabase/schema.sql",
+    "db:copy": "pbcopy < supabase/schema.sql && echo 'Schema copied to clipboard.' && open https://supabase.com/dashboard/project/psicdsfgkqhjvqreroxj/sql/new"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

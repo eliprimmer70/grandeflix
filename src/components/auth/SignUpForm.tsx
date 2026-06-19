@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { authCallbackUrl } from "@/lib/site";
+import { SupabaseSetupNotice } from "./SupabaseSetupNotice";
 
 export function SignUpForm() {
   const router = useRouter();
@@ -18,6 +20,10 @@ export function SignUpForm() {
     const prefill = searchParams.get("email");
     if (prefill) setEmail(prefill);
   }, [searchParams]);
+
+  if (!hasSupabaseEnv()) {
+    return <SupabaseSetupNotice />;
+  }
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

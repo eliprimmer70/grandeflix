@@ -2,7 +2,6 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { motion } from "framer-motion";
 import { siteConfig } from "@/data/content";
 import { WordmarkLink } from "@/components/ui/Wordmark";
 import Link from "next/link";
@@ -46,11 +45,7 @@ export function LandingPage() {
       </header>
 
       <div className="relative z-10 mx-auto grid min-h-[calc(100dvh-3.5rem)] max-w-6xl items-center gap-10 px-4 pb-16 pt-6 safe-bottom sm:min-h-[calc(100dvh-4.5rem)] sm:gap-12 sm:px-5 sm:pb-20 sm:pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:px-10 lg:pb-24">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-        >
+        <div>
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <span className="free-badge">100% free</span>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
@@ -91,14 +86,9 @@ export function LandingPage() {
               Sign in
             </Link>
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="hidden lg:block"
-        >
+        <div className="hidden lg:block">
           <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-surface/80 p-8 backdrop-blur-sm">
             <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-brand/15 blur-3xl" />
             <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-accent-blue/20 blur-3xl" />
@@ -116,7 +106,7 @@ export function LandingPage() {
               ))}
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       <div className="relative z-10 border-t border-white/[0.06] bg-surface/50 py-12 lg:hidden">
@@ -129,6 +119,13 @@ export function LandingPage() {
           ))}
         </div>
       </div>
+
+      <p className="relative z-10 pb-6 text-center text-xs text-white/25">
+        First time?{" "}
+        <Link href="/setup" className="text-white/40 underline hover:text-brand-bright">
+          Database setup
+        </Link>
+      </p>
     </div>
   );
 }
