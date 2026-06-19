@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-export function SetupClient({ schema }: { schema: string }) {
+export function SetupClient({
+  schema,
+  copyLabel = "Copy SQL to clipboard",
+}: {
+  schema: string;
+  copyLabel?: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -18,7 +24,7 @@ export function SetupClient({ schema }: { schema: string }) {
         onClick={copy}
         className="btn-secondary rounded-lg px-4 py-2 text-sm"
       >
-        {copied ? "Copied!" : "Copy SQL to clipboard"}
+        {copied ? "Copied!" : copyLabel}
       </button>
       <pre className="mt-3 max-h-64 overflow-auto rounded-lg border border-white/10 bg-black/50 p-3 text-[11px] leading-relaxed text-white/50">
         {schema}

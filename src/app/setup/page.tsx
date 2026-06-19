@@ -14,6 +14,14 @@ function readSchema() {
   }
 }
 
+function readRemindersMigration() {
+  try {
+    return readFileSync(join(process.cwd(), "supabase/migrate-content-reminders.sql"), "utf8");
+  } catch {
+    return "-- Could not load migrate-content-reminders.sql";
+  }
+}
+
 export default async function SetupPage({
   searchParams,
 }: {
@@ -21,6 +29,7 @@ export default async function SetupPage({
 }) {
   const { reason } = await searchParams;
   const schema = readSchema();
+  const remindersMigration = readRemindersMigration();
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 safe-top safe-bottom sm:px-8">
@@ -147,6 +156,17 @@ on conflict (id) do update set role = 'admin';`}
             </div>
           </li>
         </ol>
+
+        <section id="reminders" className="mt-12 rounded-xl border border-white/10 bg-white/[0.02] p-6">
+          <h2 className="font-display text-lg font-semibold text-white">Remind me (content_reminders)</h2>
+          <p className="mt-2 text-sm text-white/55">
+            If you already ran the main schema but see{" "}
+            <code className="text-white/70">Could not find the table &apos;public.content_reminders&apos;</code>{" "}
+            when clicking <strong className="text-white/80">Remind me</strong>, run this incremental migration
+            in the SQL Editor (or locally: <code className="text-white/55">npm run db:reminders</code>).
+          </p>
+          <SetupClient schema={remindersMigration} copyLabel="Copy reminders migration" />
+        </section>
 
         <section id="r2" className="mt-12 rounded-xl border border-white/10 bg-white/[0.02] p-6">
           <h2 className="font-display text-lg font-semibold text-white">Cloudflare R2 (large videos)</h2>

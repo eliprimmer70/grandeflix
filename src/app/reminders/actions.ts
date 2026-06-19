@@ -6,6 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export type ReminderState = { error?: string; reminded?: boolean };
 
+function formatReminderError(message: string): string {
+  if (message.includes("content_reminders")) {
+    return "Database is missing content_reminders. Run npm run db:reminders in Supabase SQL Editor, then try again.";
+  }
+  return message;
+}
+
 export async function toggleContentReminder(
   _prev: ReminderState,
   formData: FormData,
@@ -32,7 +39,7 @@ export async function toggleContentReminder(
       .from("content_reminders")
       .delete()
       .eq("id", existing.id);
-    if (error) return { error: error.message };
+    if (error) return { error: formatReminderError(error.message) };
 
     if (slug) {
       revalidatePath(`/watch/${slug}`);
@@ -45,7 +52,7 @@ export async function toggleContentReminder(
     user_id: user.id,
     content_id: contentId,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: formatReminderError(error.message) };
 
   if (slug) {
     revalidatePath(`/watch/${slug}`);

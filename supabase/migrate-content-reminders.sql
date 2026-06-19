@@ -1,4 +1,4 @@
--- Same as supabase/migrate-content-reminders.sql (kept for backward compatibility).
+-- Incremental migration: content_reminders (Remind me feature)
 -- Run in Supabase SQL Editor if you see:
 --   "Could not find the table 'public.content_reminders' in the schema cache"
 -- Or run locally: npm run db:reminders

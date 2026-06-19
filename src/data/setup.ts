@@ -15,7 +15,7 @@ export const supabaseSetup = {
 export const r2Setup = {
   dashboardUrl: "https://dash.cloudflare.com/?to=/:account/r2/overview",
   apiTokensUrl: "https://dash.cloudflare.com/?to=/:account/r2/api-tokens",
-  bucketName: "grandeflix-media",
+  bucketName: "grandeflix",
   createBucketDocs: "https://developers.cloudflare.com/r2/get-started/",
   publicBucketsDocs: "https://developers.cloudflare.com/r2/buckets/public-buckets/",
   apiTokensDocs: "https://developers.cloudflare.com/r2/api/s3/tokens/",
