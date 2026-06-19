@@ -1,13 +1,13 @@
 -- GRANDEFLIX Storage — run after schema.sql (Supabase SQL Editor or CLI)
 -- Creates the public `media` bucket and admin-only write policies.
 
--- file_size_limit: 52428800 = 50 MB (free-tier max). Raise on Pro if needed.
+-- file_size_limit: 1073741824 = 1 GB. Supabase Pro may be required for >50 MB on Free tier.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'media',
   'media',
   true,
-  52428800,
+  1073741824,
   array[
     'video/mp4',
     'video/webm',

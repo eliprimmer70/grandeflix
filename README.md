@@ -48,6 +48,14 @@ This creates the profile row if the signup trigger missed, then sets `role = 'ad
 
 **Optional (Vercel):** set `ADMIN_BOOTSTRAP_EMAIL` and `SUPABASE_SERVICE_ROLE_KEY` (server-only) to auto-promote that email on sign-in — no SQL step after the first deploy with those vars.
 
+### 3. Storage (admin uploads)
+
+Run **`supabase/storage.sql`** in the SQL Editor (or `npm run db:storage`) to create the public `media` bucket. Video and trailer uploads allow up to **1 GB** in the app.
+
+If the bucket already exists with a lower limit, run **`supabase/migrate-storage-1gb.sql`** (or `npm run db:storage-1gb`).
+
+**Note:** Supabase **Pro** may be required for uploads over 50 MB on some hosted plans; the app and bucket are configured for 1 GB once your Supabase project allows it.
+
 ---
 
 ## Vercel environment variables (Production)

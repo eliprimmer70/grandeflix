@@ -22,9 +22,11 @@ export type MediaKind = "video" | "thumbnail" | "trailer";
 const VIDEO_MIMES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 const THUMB_MIMES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
+const ONE_GB = 1024 * 1024 * 1024; // 1073741824
+
 export const MEDIA_LIMITS = {
-  video: { maxBytes: 50 * 1024 * 1024, mimes: VIDEO_MIMES, label: "50 MB" },
-  trailer: { maxBytes: 50 * 1024 * 1024, mimes: VIDEO_MIMES, label: "50 MB" },
+  video: { maxBytes: ONE_GB, mimes: VIDEO_MIMES, label: "1 GB" },
+  trailer: { maxBytes: ONE_GB, mimes: VIDEO_MIMES, label: "1 GB" },
   thumbnail: { maxBytes: 10 * 1024 * 1024, mimes: THUMB_MIMES, label: "10 MB" },
 } as const;
 
