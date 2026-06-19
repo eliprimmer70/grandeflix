@@ -68,7 +68,9 @@ Supabase Storage is fine for posters and short clips, but multi-GB fan films exc
 
 #### Option A — Upload from admin (recommended)
 
-Once R2 env vars are set in Vercel (see below), admins can use **Upload to Cloudflare R2** on `/admin` for video and trailer fields. Files are stored at `videos/{slug}/…`, `trailers/{slug}/…`, or `thumbnails/{slug}/…` and the public URL is saved automatically.
+Once R2 env vars are set in Vercel (see below), admins can use **Upload to Cloudflare R2** on `/admin` for video and trailer fields. Files are stored at `videos/{slug}/…`, `trailers/{slug}/…` and the public URL is saved automatically.
+
+**One-command finish:** after browser setup, add `R2_*` vars to `.env`, then run `npm run r2:setup` — it pushes env vars to Vercel, applies CORS (if wrangler is logged in), and deploys production.
 
 #### Option B — Manual upload + paste URL
 
@@ -123,7 +125,7 @@ See [R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/).
 | `R2_ACCOUNT_ID` | Cloudflare account ID (large video uploads) |
 | `R2_ACCESS_KEY_ID` | R2 API token access key |
 | `R2_SECRET_ACCESS_KEY` | R2 API token secret |
-| `R2_BUCKET_NAME` | e.g. `grandeflix` |
+| `R2_BUCKET_NAME` | `grandeflix-media` |
 | `R2_PUBLIC_URL` | Public bucket URL, e.g. `https://pub-xxxx.r2.dev` |
 
 **Redeploy** after updating env vars.
