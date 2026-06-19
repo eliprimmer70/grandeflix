@@ -19,7 +19,7 @@ export async function getSessionUser() {
 export class AuthError extends Error {
   constructor(
     message: string,
-    readonly code: "unauthorized" | "forbidden" | "misconfigured",
+    readonly code: "unauthorized" | "forbidden" | "no_profile" | "misconfigured",
   ) {
     super(message);
     this.name = "AuthError";
@@ -57,7 +57,7 @@ export async function requireAdmin() {
   if (!profile) {
     throw new AuthError(
       "No profile found. Sign out and sign up again, or run promote-admin.sql in Supabase.",
-      "forbidden",
+      "no_profile",
     );
   }
   if (profile.role !== "admin") {

@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
     if (pathname.startsWith("/admin") && !user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
+      url.searchParams.set("redirect", pathname === "/admin/denied" ? "/admin" : pathname);
       return NextResponse.redirect(url);
     }
 

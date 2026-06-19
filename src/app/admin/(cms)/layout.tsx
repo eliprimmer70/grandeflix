@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AuthError, requireAdmin } from "@/lib/content";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminCmsLayout({ children }: { children: React.ReactNode }) {
   try {
     await requireAdmin();
   } catch (err) {
@@ -12,9 +12,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       if (err.code === "misconfigured") {
         redirect("/setup?reason=env");
       }
-      redirect("/browse?admin=denied");
+      const reason = err.code === "no_profile" ? "no_profile" : "forbidden";
+      redirect(`/admin/denied?reason=${reason}`);
     }
-    redirect("/browse?admin=denied");
+    redirect("/admin/denied?reason=forbidden");
   }
 
   return children;

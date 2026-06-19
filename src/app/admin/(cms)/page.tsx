@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { deleteContent, signOutAction } from "./actions";
+import { deleteContent, signOutAction } from "../actions";
 import { getAllContentAdmin } from "@/lib/content";
 import { getReleaseBadge } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/types";
