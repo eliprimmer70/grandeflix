@@ -96,10 +96,15 @@ export default async function SetupPage({
             </span>
             <div>
               <p className="font-medium text-white">Make yourself admin (after signing up)</p>
+              <p className="mt-1 text-xs text-white/40">
+                Run <code className="text-white/55">supabase/promote-admin.sql</code> or paste below in SQL Editor.
+              </p>
               <pre className="mt-2 overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-3 text-xs text-white/60">
-{`update public.profiles
-set role = 'admin'
-where email = 'your@email.com';`}
+{`insert into public.profiles (id, email, role)
+select id, email, 'admin'
+from auth.users
+where lower(email) = lower('eli.primmer@gmail.com')
+on conflict (id) do update set role = 'admin';`}
               </pre>
             </div>
           </li>

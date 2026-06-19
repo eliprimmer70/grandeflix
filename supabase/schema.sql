@@ -85,5 +85,8 @@ create policy "content_delete_admin"
     )
   );
 
--- After first sign-up:
--- update public.profiles set role = 'admin' where email = 'eli.primmer@gmail.com';
+-- After first sign-up, promote admin (see supabase/promote-admin.sql):
+-- insert into public.profiles (id, email, role)
+-- select id, email, 'admin' from auth.users
+-- where lower(email) = lower('eli.primmer@gmail.com')
+-- on conflict (id) do update set role = 'admin';

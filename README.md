@@ -34,11 +34,17 @@ supabase db push
 
 ### 2. Admin access
 
-Sign up at `/signup`, then in SQL Editor:
+Sign up at `/signup`, then run **`supabase/promote-admin.sql`** in the SQL Editor (or `npm run db:admin`):
 
 ```sql
-update public.profiles set role = 'admin' where email = 'eli.primmer@gmail.com';
+insert into public.profiles (id, email, role)
+select id, email, 'admin'
+from auth.users
+where lower(email) = lower('eli.primmer@gmail.com')
+on conflict (id) do update set role = 'admin';
 ```
+
+This creates the profile row if the signup trigger missed, then sets `role = 'admin'`.
 
 ---
 

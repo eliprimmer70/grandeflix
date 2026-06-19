@@ -13,6 +13,9 @@
   --accent-blue: #6ea8fe;
   --accent-blue-bright: #93c5fd;
   --accent-blue-dim: #4f7fd4;
+  --accent-red: #e50914;
+  --accent-red-bright: #ff2d2d;
+  --accent-red-dim: #b20710;
   --btn-secondary: rgba(255, 255, 255, 0.1);
 }
 
@@ -28,6 +31,9 @@
   --color-accent-blue: var(--accent-blue);
   --color-accent-blue-bright: var(--accent-blue-bright);
   --color-accent-blue-dim: var(--accent-blue-dim);
+  --color-accent-red: var(--accent-red);
+  --color-accent-red-bright: var(--accent-red-bright);
+  --color-accent-red-dim: var(--accent-red-dim);
   --font-sans: var(--font-inter);
   --font-display: var(--font-syne);
 }
@@ -117,11 +123,11 @@ body {
 }
 
 .btn-watch {
-  background: linear-gradient(135deg, var(--brand) 0%, var(--accent-blue) 100%);
+  background: linear-gradient(135deg, var(--accent-red) 0%, var(--brand) 45%, var(--accent-blue) 100%);
   color: #fff;
   font-weight: 700;
   transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 24px rgba(183, 148, 246, 0.28);
+  box-shadow: 0 4px 24px rgba(229, 9, 20, 0.25);
 }
 
 .btn-watch:hover {
@@ -144,11 +150,11 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--brand) 0%, var(--accent-blue) 100%);
+  background: linear-gradient(135deg, var(--accent-red) 0%, var(--brand) 50%, var(--accent-blue) 100%);
   color: #fff;
   font-weight: 700;
   transition: filter 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 20px rgba(183, 148, 246, 0.22);
+  box-shadow: 0 4px 20px rgba(229, 9, 20, 0.2);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -212,6 +218,7 @@ body {
   background:
     radial-gradient(ellipse 65% 50% at 20% 15%, rgba(183, 148, 246, 0.22), transparent 55%),
     radial-gradient(ellipse 55% 45% at 80% 20%, rgba(110, 168, 254, 0.18), transparent 50%),
+    radial-gradient(ellipse 40% 35% at 70% 80%, rgba(229, 9, 20, 0.08), transparent 50%),
     radial-gradient(ellipse 90% 60% at 50% 100%, rgba(12, 14, 28, 0.95), transparent 60%),
     linear-gradient(165deg, #0a0c18 0%, var(--background) 55%, #040508 100%);
 }
@@ -226,7 +233,7 @@ body {
   display: inline-block;
   height: 2px;
   width: 28px;
-  background: linear-gradient(90deg, var(--brand), var(--accent-blue));
+  background: linear-gradient(90deg, var(--accent-red), var(--brand), var(--accent-blue));
   border-radius: 1px;
 }
 
@@ -250,8 +257,8 @@ body {
   align-items: center;
   gap: 0.35rem;
   border-radius: 9999px;
-  border: 1px solid rgba(183, 148, 246, 0.35);
-  background: rgba(183, 148, 246, 0.1);
+  border: 1px solid rgba(229, 9, 20, 0.35);
+  background: linear-gradient(135deg, rgba(229, 9, 20, 0.12), rgba(183, 148, 246, 0.1));
   padding: 0.25rem 0.75rem;
   font-size: 0.7rem;
   font-weight: 600;

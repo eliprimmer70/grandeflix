@@ -41,8 +41,12 @@ export function BrowseNavbar() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
       setInitial((user.email?.[0] ?? "G").toUpperCase());
-      const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-      setIsAdmin(data?.role === "admin");
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!error) setIsAdmin(data?.role === "admin");
     });
   }, []);
 
@@ -85,7 +89,7 @@ export function BrowseNavbar() {
                 >
                   {label}
                   {active && (
-                    <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-gradient-to-r from-brand to-accent-blue" />
+                    <span className="absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-gradient-to-r from-accent-red via-brand to-accent-blue" />
                   )}
                 </Link>
               );

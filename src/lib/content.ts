@@ -16,34 +16,54 @@ export async function getSessionUser() {
   }
 }
 
+export class AuthError extends Error {
+  constructor(
+    message: string,
+    readonly code: "unauthorized" | "forbidden" | "misconfigured",
+  ) {
+    super(message);
+    this.name = "AuthError";
+  }
+}
+
 export async function isUserAdmin(userId: string): Promise<boolean> {
   const supabase = await createClient();
   if (!supabase) return false;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
+  if (error) return false;
   return data?.role === "admin";
 }
 
 export async function requireAdmin() {
   const supabase = await createClient();
-  if (!supabase) throw new Error("Unauthorized");
+  if (!supabase) throw new AuthError("Supabase is not configured.", "misconfigured");
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
+  if (!user) throw new AuthError("Sign in required.", "unauthorized");
 
-  const { data: profile } = await supabase
+  const { data: profile, error } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, email")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
-  if (profile?.role !== "admin") throw new Error("Forbidden");
-  return { supabase, user };
+  if (error) throw new AuthError("Could not load profile.", "forbidden");
+  if (!profile) {
+    throw new AuthError(
+      "No profile found. Sign out and sign up again, or run promote-admin.sql in Supabase.",
+      "forbidden",
+    );
+  }
+  if (profile.role !== "admin") {
+    throw new AuthError("Admin access required.", "forbidden");
+  }
+  return { supabase, user, profile };
 }
 
 async function fetchAllContent(): Promise<DbContent[]> {
