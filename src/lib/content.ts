@@ -1,7 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import type { DbContent, Profile, UserRole } from "@/lib/types";
+import type { DbContent } from "@/lib/types";
 import { mapContent, sanitizeSearchQuery } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/types";
+
+/** GRANDEFLIX content table (separate from the main app's tables) */
+export const FLIX_CONTENT = "flix_content";
 
 export async function getSessionUser() {
   const supabase = await createClient();
@@ -11,19 +14,14 @@ export async function getSessionUser() {
   return user;
 }
 
-export async function getProfile(userId: string): Promise<Profile | null> {
+export async function isUserAdmin(userId: string): Promise<boolean> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
-    .select("*")
+    .select("is_admin")
     .eq("id", userId)
     .single();
-  return data as Profile | null;
-}
-
-export async function getUserRole(userId: string): Promise<UserRole | null> {
-  const profile = await getProfile(userId);
-  return profile?.role ?? null;
+  return Boolean(data?.is_admin);
 }
 
 export async function requireAdmin() {
@@ -35,18 +33,18 @@ export async function requireAdmin() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("is_admin")
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") throw new Error("Forbidden");
+  if (!profile?.is_admin) throw new Error("Forbidden");
   return { supabase, user };
 }
 
 async function fetchAllContent(): Promise<DbContent[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("content")
+    .from(FLIX_CONTENT)
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -57,7 +55,7 @@ async function fetchAllContent(): Promise<DbContent[]> {
 export async function getFeaturedContent() {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("content")
+    .from(FLIX_CONTENT)
     .select("*")
     .eq("featured", true)
     .order("created_at", { ascending: false })
@@ -82,7 +80,7 @@ export async function getContentRows() {
 export async function getContentBySlug(slug: string) {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("content")
+    .from(FLIX_CONTENT)
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
@@ -92,14 +90,14 @@ export async function getContentBySlug(slug: string) {
 
 export async function getAllSlugs() {
   const supabase = await createClient();
-  const { data } = await supabase.from("content").select("slug");
+  const { data } = await supabase.from(FLIX_CONTENT).select("slug");
   return (data ?? []).map((r) => r.slug as string);
 }
 
 export async function getRelatedContent(category: string, excludeId: string) {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("content")
+    .from(FLIX_CONTENT)
     .select("*")
     .eq("category", category)
     .neq("id", excludeId)
@@ -118,7 +116,7 @@ export async function searchContent(query: string) {
 
   const supabase = await createClient();
   const { data } = await supabase
-    .from("content")
+    .from(FLIX_CONTENT)
     .select("*")
     .or(`title.ilike.%${safe}%,description.ilike.%${safe}%`)
     .order("created_at", { ascending: false });
@@ -129,7 +127,7 @@ export async function searchContent(query: string) {
 export async function getAllContentAdmin() {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("content")
+    .from(FLIX_CONTENT)
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -138,6 +136,6 @@ export async function getAllContentAdmin() {
 
 export async function getContentByIdAdmin(id: string) {
   const supabase = await createClient();
-  const { data } = await supabase.from("content").select("*").eq("id", id).maybeSingle();
+  const { data } = await supabase.from(FLIX_CONTENT).select("*").eq("id", id).maybeSingle();
   return data as DbContent | null;
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/content";
+import { requireAdmin, FLIX_CONTENT } from "@/lib/content";
 import { slugify } from "@/lib/utils";
 
 export type ContentFormState = { error?: string };
@@ -42,12 +42,13 @@ export async function saveContent(
   };
 
   const { error } = id
-    ? await supabase.from("content").update(payload).eq("id", id)
-    : await supabase.from("content").insert(payload);
+    ? await supabase.from(FLIX_CONTENT).update(payload).eq("id", id)
+    : await supabase.from(FLIX_CONTENT).insert(payload);
 
   if (error) return { error: error.message };
 
   revalidatePath("/");
+  revalidatePath("/browse");
   revalidatePath("/admin");
   revalidatePath("/search");
   redirect("/admin");
@@ -55,8 +56,9 @@ export async function saveContent(
 
 export async function deleteContent(id: string) {
   const { supabase } = await requireAdmin();
-  await supabase.from("content").delete().eq("id", id);
+  await supabase.from(FLIX_CONTENT).delete().eq("id", id);
   revalidatePath("/");
+  revalidatePath("/browse");
   revalidatePath("/admin");
 }
 
